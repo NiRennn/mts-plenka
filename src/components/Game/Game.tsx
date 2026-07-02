@@ -295,7 +295,7 @@ function Game() {
           ></button>
         </div>
       </div>
-      {isStarted && !isFound && (
+      {isStarted && !isFound && !isTimeOver && !isExitConfirmOpen && (
         <div className="game__top">
           <div className="game__task">
             <img src={plenkaFull} alt="" className="game__task_icon" />
@@ -310,7 +310,7 @@ function Game() {
         </div>
       )}
 
-      {isStarted && !isFound && !isTimeOver && (
+      {isStarted && !isFound && !isTimeOver && !isExitConfirmOpen && (
         <div className="Game__hint_wrapper">
           <div className="game__hint">
             <img src={finger} alt="" className="game__hint_icon" />

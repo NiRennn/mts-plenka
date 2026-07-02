@@ -23,7 +23,7 @@ import { useAppStore } from "../../store/appStore";
 const levels = [
   {
     id: 1,
-    title: "ЛЕТНЯЯ ТУСОВКА",
+    title: "ЛЕТНЯЯ ТУСОВКА", 
     location: "ЛЕТНЯЯ ТУСОВКА",
     image: party,
   },

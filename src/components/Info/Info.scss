@@ -107,7 +107,7 @@
   width: 100%;
   padding-left: 29px;
   font-family: "MTSWideMedium";
-
+  font-weight: 500;
 
   font-size: 26px;
   line-height: 28px;
@@ -150,6 +150,8 @@
   line-height: 24px;
   letter-spacing: -0.22px;
   color: #000000;
+  font-weight: 500;
+
 }
 
 .info__middle {
@@ -160,7 +162,7 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-//   margin-top: -40px;
+  //   margin-top: -40px;
 
   background-image: url("../../assets/images/loading-bg.jpg");
   background-repeat: no-repeat;
@@ -202,6 +204,8 @@
   line-height: 32px;
   letter-spacing: -0.3px;
   color: #000000;
+  font-weight: 500;
+
 
   margin-bottom: 26px;
   padding-left: 17px;

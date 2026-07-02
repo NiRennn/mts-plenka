@@ -21,6 +21,10 @@ import menuPlenkaFull from "../assets/icons/plenka-full.png";
 import menuPlenkaEmpty from "../assets/icons/plenka-empty.png";
 import task from "../assets/icons/task.png";
 import cafe from "../assets/images/cafe.jpg";
+import picnic from "../assets/images/picnic.jpg";
+import bikes from "../assets/images/bikes.jpg";
+import party from "../assets/images/party.jpg";
+import room from "../assets/images/room.jpg";
 import treug from "../assets/icons/treug.svg";
 
 import game11 from "../assets/images/game/game11.jpg";
@@ -79,6 +83,11 @@ export const APP_PRELOAD_IMAGES = Array.from(
     menuPlenkaEmpty,
     task,
     cafe,
+    picnic,
+    bikes,
+    party,
+    room,
+    
     treug,
 
     game11,

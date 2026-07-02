@@ -151,7 +151,7 @@
   overflow: hidden;
 
   background: #ffffff;
-   box-sizing: border-box;
+  box-sizing: border-box;
 
   cursor: pointer;
 
@@ -222,15 +222,11 @@
 
   object-fit: cover;
 
-
   border-radius: 0;
 
   // -webkit-clip-path: ellipse(78% 100% at 50% 0%);
   // clip-path: ellipse(90% 100% at 50% 0%);
-
 }
-
-
 
 .menu__level_card_title {
   width: 100%;
@@ -373,9 +369,30 @@
   left: 65%;
   bottom: 0;
 
-
-
   transform: translateX(-50%);
 
   display: block;
+}
+
+@media (max-height: 720px) {
+  .menu__content_main_header {
+    padding-left: 35px;
+    padding-right: 32px;
+
+    margin-top: 8px;
+  }
+  .menu__content_main_btnblock {
+    gap: 6px;
+    margin-top: 0;
+  }
+
+  .menu__level_wheel {
+    margin-top: 12px;
+    margin-bottom: 30px;
+  }
+  .menu__level_pointer {
+    bottom: -20px;
+    transform: translateX(-50%);
+    z-index: 6;
+  }
 }

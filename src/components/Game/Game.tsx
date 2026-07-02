@@ -28,7 +28,7 @@ import locat from "../../assets/icons/loc1.png";
 import finger from "../../assets/icons/finger.png";
 import cross from "../../assets/icons/cross.png";
 
-const GAME_TIME_SECONDS = 5 * 60;
+const GAME_TIME_SECONDS = 1 * 20;
 
 const DEBUG_TARGET = true;
 

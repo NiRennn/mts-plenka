@@ -8,6 +8,10 @@ import plenkaFull from "../../assets/icons/plenka-full.png";
 import plenkaEmpty from "../../assets/icons/plenka-empty.png";
 import task from "../../assets/icons/task.png";
 import cafe from "../../assets/images/cafe.jpg";
+import picnic from '../../assets/images/picnic.jpg'
+import room from '../../assets/images/room.jpg'
+import party from '../../assets/images/party.jpg'
+import bikes from '../../assets/images/bikes.jpg'
 import Button from "../Button/Button";
 import treug from "../../assets/icons/treug.svg";
 
@@ -21,7 +25,7 @@ const levels = [
     id: 1,
     title: "ЛЕТНЯЯ ТУСОВКА",
     location: "ЛЕТНЯЯ ТУСОВКА",
-    image: cafe,
+    image: party,
   },
   {
     id: 2,
@@ -33,19 +37,19 @@ const levels = [
     id: 3,
     title: "Пикник",
     location: "ПИКНИК",
-    image: cafe,
+    image: picnic,
   },
   {
     id: 4,
     title: "ВЕЛОЗАЕЗД",
     location: "ВЕЛОЗАЕЗД",
-    image: cafe,
+    image: bikes,
   },
   {
     id: 5,
     title: "Твоя комната",
     location: "ТВОЯ КОМНАТА",
-    image: cafe,
+    image: room,
   },
 ];
 
@@ -132,7 +136,7 @@ function Menu() {
 
     setTouchStartX(null);
   };
-
+ 
   return (
     <div className="menu">
       <div className="menu__content">

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./Info.scss";
 import { useNavigate } from "react-router-dom";
 import appRoutes from "../../routes/routes";
@@ -14,7 +14,6 @@ import li2 from "../../assets/icons/li-2.png";
 
 import Button from "../Button/Button";
 
-
 type FaqItem = {
   id: number;
   title: string;
@@ -24,7 +23,7 @@ type FaqItem = {
 const faqItems: FaqItem[] = [
   {
     id: 1,
-    title: "Как принять участие в розыгрыше?",
+    title: "Как\u00A0принять участие в\u00A0розыгрыше?",
     text: "Подпишись на канал РИИЛ, найди 5 спрятанных фотоплёнок и выполни условия розыгрыша.",
   },
   {
@@ -34,18 +33,37 @@ const faqItems: FaqItem[] = [
   },
   {
     id: 3,
-    title: "В чем эксклюзивность плёнки?",
-    text: "Мы прокачали классическую катушку Lucky Color C200 на 36 кадров, добавив узоры и шанс стать частью кампании.\n\nПриходи в фотолабораторию Луч, бесплатно сканируй плёнку и, возможно, именно твои кадры появятся в наружной рекламе МТС РИИЛ.",
+    title: "В\u00A0чем эксклюзивность плёнки?",
+    text: "Мы\u00A0прокачали классическую катушку Lucky Color C200 на\u00A036\u00A0кадров, добавив узоры и\u00A0шанс стать частью кампании.\n\nПриходи в\u00A0фотолабораторию Луч, бесплатно сканируй плёнку и, возможно, именно твои кадры появятся в\u00A0наружной рекламе МТС\u00A0РИИЛ.",
   },
 ];
 
 function Info() {
-  const [openedFaqId, setOpenedFaqId] = useState<number>(3);
-    const navigate = useNavigate();
+  const [openedFaqId, setOpenedFaqId] = useState<number>(1);
+  const navigate = useNavigate();
 
   const handleGoToMenu = () => {
     navigate(appRoutes.MENU);
   };
+
+  useEffect(() => {
+    const tg = (window as any)?.Telegram?.WebApp;
+    const backButton = tg?.BackButton;
+
+    if (!backButton) return;
+
+    const handleTelegramBack = () => {
+      navigate(appRoutes.MENU, { replace: true });
+    };
+
+    backButton.show();
+    backButton.onClick(handleTelegramBack);
+
+    return () => {
+      backButton.offClick(handleTelegramBack);
+      backButton.hide();
+    };
+  }, [navigate]);
 
   const handleToggleFaq = (id: number) => {
     setOpenedFaqId((prev) => (prev === id ? 0 : id));
@@ -65,7 +83,7 @@ function Info() {
             <h1 className="info__title">
               Участвуй
               <br />
-              в розыгрыше
+              в&nbsp;розыгрыше
               <br />
               эксклюзивных
               <br />
@@ -77,7 +95,7 @@ function Info() {
                 <p className="info__step_text">
                   Подпишись
                   <br />
-                  на канал
+                  на&nbsp;канал
                 </p>
               </div>
 
@@ -90,7 +108,9 @@ function Info() {
                 </p>
               </div>
 
-              <Button variant="primary" onClick={handleGoToMenu}>К поискам!</Button>
+              <Button variant="primary" onClick={handleGoToMenu}>
+                К&nbsp;поискам!
+              </Button>
             </div>
           </div>
         </section>
@@ -102,8 +122,8 @@ function Info() {
 
         <section className="info__faq">
           <h2 className="info__faq_title">
-            Ответы на частые
-            <br />
+            Ответы на&nbsp;частые
+           
             вопросы
           </h2>
 

@@ -88,7 +88,7 @@ export const gameLevels: GameLevel[] = [
   },
   {
     id: 2,
-    title: "КОФЕЙНЯ",
+    title: "КОФЕЙНЯ", 
     apiLocation: "МОДНАЯ КОФЕЙНЯ",
 
     menuTitle: "МОДНАЯ КОФЕЙНЯ",

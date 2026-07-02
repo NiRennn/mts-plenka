@@ -27,8 +27,9 @@ import checkIcon from "../../assets/icons/done.png";
 import locat from "../../assets/icons/loc1.png";
 import finger from "../../assets/icons/finger.png";
 import cross from "../../assets/icons/cross.png";
+import quest from "../../assets/icons/quest.png";
 
-const GAME_TIME_SECONDS = 1 * 20;
+const GAME_TIME_SECONDS = 1 * 10;
 
 const DEBUG_TARGET = true;
 
@@ -45,6 +46,7 @@ function Game() {
   const navigate = useNavigate();
   const location = useLocation();
   const user = useAppStore((state) => state.user);
+
   const resultSentRef = useRef(false);
   const sceneRef = useRef<HTMLDivElement | null>(null);
   const dragStateRef = useRef({
@@ -55,6 +57,10 @@ function Game() {
   });
 
   const [isSceneDragging, setIsSceneDragging] = useState(false);
+  const [isStarted, setIsStarted] = useState(false);
+  const [isFound, setIsFound] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(GAME_TIME_SECONDS);
+  const [isExitConfirmOpen, setIsExitConfirmOpen] = useState(false);
 
   const locationState = location.state as GameLocationState | null;
 
@@ -68,6 +74,8 @@ function Game() {
   const variant = useMemo(() => {
     return getRandomVariant(level);
   }, [level]);
+
+  const isTimeOver = isStarted && !isFound && timeLeft === 0;
 
   const sendGameResult = useCallback(
     async (isSuccess: boolean) => {
@@ -93,17 +101,29 @@ function Game() {
     [user?.user_id, level.title],
   );
 
-  const [isStarted, setIsStarted] = useState(false);
-  const [isFound, setIsFound] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(GAME_TIME_SECONDS);
-
-  const isTimeOver = isStarted && !isFound && timeLeft === 0;
-
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
   const formattedTime = `${minutes}:${String(seconds).padStart(2, "0")}`;
 
-  const canMoveScene = isStarted && !isFound && !isTimeOver;
+  const canMoveScene =
+    isStarted && !isFound && !isTimeOver && !isExitConfirmOpen;
+
+  const handleOpenExitConfirm = useCallback(() => {
+    setIsExitConfirmOpen(true);
+    stopSceneDrag();
+  }, []);
+
+  const handleCloseExitConfirm = () => {
+    setIsExitConfirmOpen(false);
+  };
+
+  const handleExitToMenu = async () => {
+    if (isStarted && !isFound && !isTimeOver) {
+      await sendGameResult(false);
+    }
+
+    navigate(appRoutes.MENU, { replace: true });
+  };
 
   const handleSceneWheel = (event: WheelEvent<HTMLDivElement>) => {
     if (!sceneRef.current || !canMoveScene) return;
@@ -151,12 +171,12 @@ function Game() {
   };
 
   const handleBack = () => {
-    navigate(-1);
+    handleOpenExitConfirm();
   };
 
   const handleStart = () => {
     resultSentRef.current = false;
-
+    setIsExitConfirmOpen(false);
     setIsStarted(true);
 
     requestAnimationFrame(() => {
@@ -179,7 +199,7 @@ function Game() {
   };
 
   const handleGoMenu = () => {
-    navigate(appRoutes.MENU);
+    navigate(appRoutes.MENU, { replace: true });
   };
 
   const handleRestart = () => {
@@ -188,6 +208,7 @@ function Game() {
     setTimeLeft(GAME_TIME_SECONDS);
     setIsStarted(false);
     setIsFound(false);
+    setIsExitConfirmOpen(false);
 
     requestAnimationFrame(() => {
       sceneRef.current?.scrollTo({
@@ -198,7 +219,22 @@ function Game() {
   };
 
   useEffect(() => {
-    if (!isStarted || isFound || isTimeOver) return;
+    const tg = (window as any)?.Telegram?.WebApp;
+    const backButton = tg?.BackButton;
+
+    if (!backButton) return;
+
+    backButton.show();
+    backButton.onClick(handleOpenExitConfirm);
+
+    return () => {
+      backButton.offClick(handleOpenExitConfirm);
+      backButton.hide();
+    };
+  }, [handleOpenExitConfirm]);
+
+  useEffect(() => {
+    if (!isStarted || isFound || isTimeOver || isExitConfirmOpen) return;
 
     const timerId = window.setInterval(() => {
       setTimeLeft((prev) => {
@@ -214,7 +250,7 @@ function Game() {
     return () => {
       window.clearInterval(timerId);
     };
-  }, [isStarted, isFound, isTimeOver]);
+  }, [isStarted, isFound, isTimeOver, isExitConfirmOpen]);
 
   useEffect(() => {
     if (!isTimeOver) return;
@@ -255,11 +291,7 @@ function Game() {
             }}
             onClick={handleFindPlenka}
             aria-label="Найти плёнку"
-          >
-            {/* {isFound && (
-              <img src={foundPlenka} alt="" className="game__target_plenka" />
-            )} */}
-          </button>
+          ></button>
         </div>
       </div>
       {isStarted && !isFound && (
@@ -283,9 +315,7 @@ function Game() {
             <img src={finger} alt="" className="game__hint_icon" />
 
             <p className="game__hint_text">
-              Перемещай экран,
-              <br />
-              чтобы увидеть всю комнату
+              Перемещай экран, чтобы увидеть всю локацию
             </p>
           </div>
         </div>
@@ -314,8 +344,8 @@ function Game() {
             <h2 className="game__found_title">Плёнка найдена!</h2>
 
             <p className="game__found_text">
-              Отлично! Ищи катушку в других локациях, чтобы стать участником
-              розыгрыша реальной плёнки
+              Отлично! Ищи катушку в&nbsp;других локациях, чтобы стать
+              участником розыгрыша реальной плёнки
             </p>
           </div>
 
@@ -340,7 +370,31 @@ function Game() {
               Повторить
             </Button>
 
-            <Button variant="secondary" onClick={handleBack}>
+            <Button variant="secondary3" onClick={handleBack}>
+              В&nbsp;меню
+            </Button>
+          </div>
+        </div>
+      )}
+      {isExitConfirmOpen && !isFound && !isTimeOver && (
+        <div className="game__exit">
+          <div className="game__exit_card">
+            <img src={quest} alt="" className="game__exit_icon" />
+            <h2 className="game__exit_title">Хочешь выйти?</h2>
+
+            <p className="game__exit_text">
+              Время ещё есть, да и плёнка не найдена.
+              <br />
+              Может, продолжим?
+            </p>
+          </div>
+
+          <div className="game__exit_btnblock">
+            <Button variant="primary" onClick={handleCloseExitConfirm}>
+              Продолжить
+            </Button>
+
+            <Button variant="secondary3" onClick={handleExitToMenu}>
               В меню
             </Button>
           </div>

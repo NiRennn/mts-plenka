@@ -56,12 +56,12 @@ function Onboarding() {
         <div className="onboarding__content_bot">
           <div className="onboarding__content_bot_textblock">
             <p className="onboarding__content_bot_textblock_header">
-              Эксклюзивная плёнка уже ждет!
+              Эксклюзивная плёнка уже ждёт!
             </p>
 
             <p className="onboarding__content_bot_textblock_text">
               <span className="onboarding__content_bot_textblock_b">
-                МТС&nbsp;РИИЛ{" "}
+                МТС от&nbsp;РИИЛ{" "}
               </span>
               объединился с&nbsp;фотолабораторией{" "}
               <span className="onboarding__content_bot_textblock_b">ЛУЧ </span>
@@ -71,7 +71,7 @@ function Onboarding() {
               </span>{" "}
               <br />
               <br />
-              Найди катушку плёнки в&nbsp;нашей игре и&nbsp;участвуйте
+              Найди катушку плёнки и&nbsp;участвуй
               в&nbsp;розыгрыше реальных плёнок
             </p>
           </div>

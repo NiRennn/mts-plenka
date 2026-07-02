@@ -67,18 +67,18 @@ function Sub() {
         <div>
           <img src={plenka} alt="" className="sub__content_plenka" />
 
-          <p className="sub__content_header">Два шага до участия в розыгрыше</p>
+          <p className="sub__content_header">Два шага до&nbsp;участия в&nbsp;розыгрыше</p>
 
           <div className="sub__content_ul">
             <div className="sub__content_li">
               <img src={li1} alt="" className="sub__content_li_img" />
-              <p className="sub__content_li_text">Подпишись на канал РИИЛ</p>
+              <p className="sub__content_li_text">Подпишись на&nbsp;канал РИИЛ</p>
             </div>
 
             <div className="sub__content_li">
               <img src={li2} alt="" className="sub__content_li_img" />
               <p className="sub__content_li_text">
-                Найди 5 спрятанных фотоплёнок
+                Найди 5&nbsp;спрятанных фотоплёнок
               </p>
             </div>
           </div>
@@ -119,13 +119,13 @@ function Sub() {
                 <p className="sub__notfound_title">
                   Подписка
                   <br />
-                  не найдена!
+                  не&nbsp;найдена!
                 </p>
 
                 <p className="sub__notfound_text">
-                  Мы не смогли найти твою подписку
+                  Мы не&nbsp;смогли найти твою подписку
                   <br />
-                  на канал РИИЛ.
+                  на&nbsp;канал РИИЛ.
                   <br />
                   Повтори попытку ещё раз!
                 </p>

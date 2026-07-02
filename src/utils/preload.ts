@@ -1,42 +1,46 @@
-type PreloadResult = {
+export type PreloadImageResult = {
   src: string;
   ok: boolean;
+  error?: unknown;
 };
 
-const imageCache = new Map<string, Promise<PreloadResult>>();
+export const preloadImageSrc = (src: string): Promise<PreloadImageResult> => {
+  return new Promise((resolve) => {
+    if (!src) {
+      resolve({
+        src,
+        ok: false,
+        error: "Empty image src",
+      });
 
-export function preloadImage(src: string): Promise<PreloadResult> {
-  if (imageCache.has(src)) {
-    return imageCache.get(src)!;
-  }
+      return;
+    }
 
-  const promise = new Promise<PreloadResult>((resolve) => {
     const img = new Image();
-    img.decoding = "async";
 
-    img.onload = async () => {
-      try {
-        if ("decode" in img) {
-          await img.decode();
-        }
-      } catch {
-        // ignore decode errors
-      }
-
-      resolve({ src, ok: true });
+    img.onload = () => {
+      resolve({
+        src,
+        ok: true,
+      });
     };
 
-    img.onerror = () => {
-      resolve({ src, ok: false });
+    img.onerror = (error) => {
+      resolve({
+        src,
+        ok: false,
+        error,
+      });
     };
 
     img.src = src;
   });
+};
 
-  imageCache.set(src, promise);
-  return promise;
-}
+export const preloadImageSrcs = async (
+  srcs: string[],
+): Promise<PreloadImageResult[]> => {
+  const uniqueSrcs = Array.from(new Set(srcs));
 
-export function preloadImageSrcs(srcs: readonly string[]) {
-  return Promise.all([...new Set(srcs)].map(preloadImage));
-}
+  return Promise.all(uniqueSrcs.map(preloadImageSrc));
+};

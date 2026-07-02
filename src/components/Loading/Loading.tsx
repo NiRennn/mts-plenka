@@ -8,9 +8,20 @@ import plenka from "../../assets/images/riil-plenka.png";
 import mtsLogo from "../../assets/icons/mts-logo.svg";
 import Loader from "../Loader/Loader";
 import type { UserDto } from "../../store/appStore";
+import { preloadImageSrcs } from "../../utils/preload";
+import { APP_PRELOAD_IMAGES } from "../../data/preloadImages";
+
+const MIN_LOADING_DELAY = 3000;
+const PRELOAD_HARD_TIMEOUT = 7000;
+
+const delay = (ms: number) =>
+  new Promise((resolve) => {
+    window.setTimeout(resolve, ms);
+  });
 
 function Loading() {
   const navigate = useNavigate();
+
   const pickNextRoute = (user: UserDto | null) => {
     if (user?.rule && user?.subs) {
       return appRoutes.MENU;
@@ -26,12 +37,14 @@ function Loading() {
 
   useEffect(() => {
     let navigated = false;
+    let cancelled = false;
 
     const tg = (window as any)?.Telegram?.WebApp;
     tg?.ready?.();
 
     const go = (to: string) => {
-      if (navigated) return;
+      if (navigated || cancelled) return;
+
       navigated = true;
       navigate(to, { replace: true });
     };
@@ -113,34 +126,60 @@ function Loading() {
     tg?.setBackgroundColor?.("#f3f9ff");
     tg?.setBottomBarColor?.("#f3f9ff");
 
-    // const fetchUserData = async () => {
-    //   try {
-    //     await fetchAndHydrateUserData(effectiveUserId, startParam);
-    //   } catch (error) {
-    //     console.error("Error fetching user data:", error);
-    //   }
-    // };
-    const init = async () => {
-      const minDelay = new Promise((resolve) => setTimeout(resolve, 3000));
+    const preloadImages = async () => {
+      const results = await preloadImageSrcs(APP_PRELOAD_IMAGES);
 
-      try {
-        const [userData] = await Promise.all([
-          fetchAndHydrateUserData(effectiveUserId, startParam),
-          minDelay,
-        ]);
+      const failedImages = results
+        .filter((result) => !result.ok)
+        .map((result) => result.src);
 
-        go(pickNextRoute(userData.user));
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-
-        go(appRoutes.ONBOARDING);
+      if (failedImages.length) {
+        console.warn("[preload] failed images:", failedImages);
       }
+    };
+
+    const init = async () => {
+      const minDelay = delay(MIN_LOADING_DELAY);
+
+      const userDataPromise = fetchAndHydrateUserData(
+        effectiveUserId,
+        startParam,
+      );
+
+      const preloadWithTimeout = Promise.race([
+        preloadImages(),
+        delay(PRELOAD_HARD_TIMEOUT).then(() => {
+          console.warn("[preload] hard timeout");
+        }),
+      ]);
+
+      const [userDataResult] = await Promise.allSettled([
+        userDataPromise,
+        preloadWithTimeout,
+        minDelay,
+      ]);
+
+      if (cancelled) return;
+
+      if (userDataResult.status !== "fulfilled") {
+        console.error("Error fetching user data:", userDataResult.reason);
+        return;
+      }
+
+      const userData = userDataResult.value;
+
+      if (!userData.user) {
+        console.error("User data is empty");
+        return;
+      }
+
+      go(pickNextRoute(userData.user));
     };
 
     init();
 
     return () => {
-      navigated = true;
+      cancelled = true;
     };
   }, [navigate]);
   return (

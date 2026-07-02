@@ -23,13 +23,12 @@ import { useAppStore } from "../../store/appStore";
 import { saveGameResult } from "../../api/gameResult";
 
 import plenkaFull from "../../assets/icons/pl.png";
-// import foundPlenka from "../../assets/icons/done-plenka.png";
 import checkIcon from "../../assets/icons/done.png";
 import locat from "../../assets/icons/loc1.png";
 import finger from "../../assets/icons/finger.png";
 import cross from "../../assets/icons/cross.png";
 
-const GAME_TIME_SECONDS = 1 * 10;
+const GAME_TIME_SECONDS = 5 * 60;
 
 const DEBUG_TARGET = true;
 

@@ -32,8 +32,12 @@ function Onboarding() {
         console.error("Rules were not accepted");
         return;
       }
+      if (user.subs) {
+        navigate(appRoutes.MENU, { replace: true });
+        return;
+      }
 
-      navigate(appRoutes.SUB);
+      navigate(appRoutes.SUB, { replace: true });
     } catch (error) {
       console.error("Error accepting rules:", error);
     } finally {

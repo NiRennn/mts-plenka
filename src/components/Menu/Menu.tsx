@@ -76,9 +76,9 @@ function Menu() {
   const activeLevel = levels[activeLevelIndex];
   const isActiveLevelPassed = isLevelPassed(activeLevel.location);
 
-  // const passedLevelsCount = levels.filter((level) =>
-  //   isLevelPassed(level.location),
-  // ).length;
+  const passedLevelsCount = levels.filter((level) =>
+    isLevelPassed(level.location),
+  ).length;
 
   const handleGoToInfo = () => {
     navigate(appRoutes.INFO);
@@ -147,10 +147,10 @@ function Menu() {
             />
 
             <div className="menu__content_main_topside_energy">
-              {levels.map((level) => (
+              {levels.map((level, index) => (
                 <img
                   key={level.id}
-                  src={isLevelPassed(level.location) ? plenkaFull : plenkaEmpty}
+                  src={index < passedLevelsCount ? plenkaFull : plenkaEmpty}
                   alt=""
                   className="menu__content_main_topside_energy_plenka"
                 />

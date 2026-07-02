@@ -40,7 +40,9 @@
   display: none;
 }
 
-.game[data-started="false"] .game__scene {
+.game[data-started="false"] .game__scene,
+.game[data-found="true"] .game__scene,
+.game[data-time-over="true"] .game__scene {
   filter: blur(9px);
   // transform: scale(1.03);
 }
@@ -260,6 +262,9 @@
   );
   transform: translateX(-50%);
   padding: 0 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .game__hint {
@@ -320,9 +325,9 @@
     );
 
   background: rgba(0, 0, 0, 0.14);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-
+  // backdrop-filter: blur(12px);
+  // -webkit-backdrop-filter: blur(12px);
+/////////////////////////////////////////////
   z-index: 30;
 }
 
@@ -391,8 +396,8 @@
     );
 
   background: rgba(0, 0, 0, 0.34);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  // backdrop-filter: blur(12px);
+  // -webkit-backdrop-filter: blur(12px);
 
   z-index: 30;
 }

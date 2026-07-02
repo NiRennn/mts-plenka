@@ -227,6 +227,7 @@ function Game() {
       className="game"
       data-started={isStarted}
       data-found={isFound}
+      data-time-over={isTimeOver}
       data-debug-target={DEBUG_TARGET}
     >
       <div

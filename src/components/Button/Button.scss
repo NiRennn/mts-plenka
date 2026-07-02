@@ -20,6 +20,8 @@
   letter-spacing: 0;
   text-transform: uppercase;
 
+  font-weight: 700;
+
   transition:
     transform 0.06s ease,
     opacity 0.15s ease,
@@ -41,7 +43,6 @@
 .btn--primary {
   background: #ff0032;
   color: #ffffff;
-  font-weight: 900;
   font-size: 18px;
   font-family: "MTSWideBold";
 }
@@ -59,7 +60,7 @@
   font-family: "MTSWideBold";
 }
 .btn--secondary3 {
-  background: #FFFFFF4D;
+  background: #ffffff4d;
   color: #000000;
   font-family: "MTSWideBold";
 }
@@ -124,3 +125,10 @@
 //     height: 44px;
 //   }
 // }
+
+@media (max-height: 640px) {
+  .btn {
+    font-size: 16px;
+    line-height: 100%;
+  }
+}

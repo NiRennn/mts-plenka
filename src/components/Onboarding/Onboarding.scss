@@ -102,7 +102,7 @@
 
 @media (max-height: 720px) {
   .onboarding__content_top {
-    margin-bottom: -50px;
+    margin-bottom: -40px;
   }
 
   .onboarding__content_top_cards {
@@ -119,19 +119,26 @@
   }
 
   .onboarding__content_bot_textblock_header {
-    font-size: 32px;
-    line-height: 36px;
-    letter-spacing: -1%;
-
     margin-bottom: 12px;
   }
 
   .onboarding__content_bot_textblock_text {
-    font-size: 15px;
-    line-height: 18px;
-    letter-spacing: -1%;
-
     margin-bottom: 20px;
-    font-family: "MTSTextRegular";
   }
+}
+
+
+@media (max-height: 640px) {
+.onboarding__content_bot_textblock_header {
+  font-size: 28px;
+  line-height: 30px;
+  letter-spacing: -1%;
+}
+
+.onboarding__content_bot_textblock_text {
+  font-size: 14px;
+  line-height: 15px;
+  letter-spacing: -1%;
+
+}
 }

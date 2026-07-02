@@ -213,3 +213,49 @@
   gap: 12px;
   padding: 0 28px;
 }
+
+
+@media (max-height: 640px) {
+.sub__notfound_title {
+  font-size: 32px;
+  line-height: 34px;
+  letter-spacing: -1%;
+
+  margin-bottom: 19px;
+}
+
+.sub__notfound_text {
+  font-size: 14px;
+  line-height: 18px;
+}
+
+
+.sub__content_header {
+  font-size: 28px;
+  line-height: 30px;
+  padding: 0 34px;
+}
+
+.sub__content_ul {
+  gap: 20px;
+}
+
+.sub__content_li {
+  gap: 12px;
+}
+
+.sub__content_li_img {
+  width: 51px;
+  height: 51px;
+}
+
+.sub__content_li_text {
+  font-size: 18px;
+  line-height: 20px;
+}
+
+.sub__content_btnblock {
+
+  gap: 6px;
+}
+}

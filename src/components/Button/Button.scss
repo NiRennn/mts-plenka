@@ -1,0 +1,126 @@
+.btn {
+  appearance: none;
+  border: 0;
+  cursor: pointer;
+  user-select: none;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 100px;
+  width: 100%;
+  height: 64px;
+  padding: 10px;
+  position: relative;
+  z-index: 2;
+
+  font-size: 18px;
+  line-height: 100%;
+  letter-spacing: 0;
+  text-transform: uppercase;
+
+  transition:
+    transform 0.06s ease,
+    opacity 0.15s ease,
+    filter 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+
+  &:active {
+    transform: scale(0.99);
+  }
+  &:disabled {
+    cursor: not-allowed;
+  }
+}
+
+.btn--full {
+  width: 100%;
+}
+
+.btn--primary {
+  background: #ff0032;
+  color: #ffffff;
+  font-weight: 900;
+  font-size: 18px;
+  font-family: "MTSWideBold";
+}
+
+.btn--secondary {
+  background: #ffffffb2;
+  color: #000000;
+  font-family: "MTSWideBold";
+}
+
+.btn--secondary2 {
+  background: transparent;
+  color: #000000;
+  border: 1px solid #ff0032;
+  font-family: "MTSWideBold";
+}
+.btn--secondary3 {
+  background: #FFFFFF4D;
+  color: #000000;
+  font-family: "MTSWideBold";
+}
+
+.btn--modal {
+  background: #ff0032;
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 500;
+  height: 69px;
+}
+
+.btn--modal:disabled {
+  background: #ff7895;
+  color: #ffffff;
+  opacity: 1;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn--blocked,
+.btn--blocked:disabled {
+  background-color: #c01d50;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 16px;
+}
+
+.btn__spinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  animation: btnSpin 0.8s linear infinite;
+  opacity: 0.9;
+}
+
+@keyframes btnSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// @media (max-height: 800px) {
+//   .btn {
+//     font-size: 16px;
+//     height: 48px;
+//   }
+
+//   .btn--primary {
+//     background: #ffffff;
+//     color: #ff0032;
+//     font-weight: 900;
+//     font-size: 16px;
+//     font-family: "MTSWideBlack";
+//   }
+// }
+
+// @media (max-height: 800px) {
+//   .btn {
+//     font-size: 14px;
+//     height: 44px;
+//   }
+// }

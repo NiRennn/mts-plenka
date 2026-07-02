@@ -1,0 +1,60 @@
+@font-face {
+  font-family: "MTSExtBold";
+  src: url("./assets/fonts/MTSExtended-Bold.otf") format("opentype");
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "MTSSansRegular";
+  src: url("./assets/fonts/MTSSans-Regular.otf") format("opentype");
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "MTSSansBold";
+  src: url("./assets/fonts/MTSSans-Bold.otf") format("opentype");
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "MTSWideBlack";
+  src: url("./assets/fonts/MTSWide-Black.otf") format("opentype");
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "MTSWideBold";
+  src: url("./assets/fonts/MTSWide-Bold.otf") format("opentype");
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "MTSWideMedium";
+  src: url("./assets/fonts/MTSWide-Medium.otf") format("opentype");
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "MTSWideRegular";
+  src: url("./assets/fonts/MTSWide-Regular.otf") format("opentype");
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "MTSTextMedium";
+  src: url("./assets/fonts/MTSText-Medium.otf") format("opentype");
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "MTSTextRegular";
+  src: url("./assets//fonts/MTSText-Regular.otf") format("opentype");
+  font-style: normal;
+  font-display: swap;
+}
+
+.App {
+  width: 100%;
+  height: 100vh;
+  background-color: #F5F3EA;
+}

@@ -24,7 +24,11 @@ import { saveGameResult } from "../../api/gameResult";
 
 import plenkaFull from "../../assets/icons/pl.png";
 import checkIcon from "../../assets/icons/done.png";
-import locat from "../../assets/icons/loc1.png";
+import locat1 from "../../assets/icons/loc1.png";
+import locat2 from "../../assets/icons/loc2.png";
+import locat3 from "../../assets/icons/loc3.png";
+import locat4 from "../../assets/icons/loc4.png";
+import locat5 from "../../assets/icons/loc5.png";
 import finger from "../../assets/icons/finger.png";
 import cross from "../../assets/icons/cross.png";
 import quest from "../../assets/icons/quest.png";
@@ -46,6 +50,7 @@ function Game() {
   const navigate = useNavigate();
   const location = useLocation();
   const user = useAppStore((state) => state.user);
+  const locations = useAppStore((state) => state.locations);
 
   const resultSentRef = useRef(false);
   const sceneRef = useRef<HTMLDivElement | null>(null);
@@ -74,6 +79,19 @@ function Game() {
   const variant = useMemo(() => {
     return getRandomVariant(level);
   }, [level]);
+
+  const locatImages = [locat1, locat2, locat3, locat4, locat5];
+
+  const passedLevelsCount = useMemo(() => {
+    return gameLevels.filter((gameLevel) =>
+      locations.some(
+        (item) => item.location === gameLevel.apiLocation && item.is_success,
+      ),
+    ).length;
+  }, [locations]);
+
+  const currentLocatImage =
+    locatImages[Math.min(passedLevelsCount, locatImages.length - 1)];
 
   const isTimeOver = isStarted && !isFound && timeLeft === 0;
 
@@ -325,9 +343,8 @@ function Game() {
       {!isStarted && (
         <div className="game__intro">
           <div className="game__intro_card">
-            <img src={locat} alt="" className="game__intro_loc" />
+            <img src={currentLocatImage} alt="" className="game__intro_loc" />{" "}
             <h1 className="game__intro_title">{level.title}</h1>
-
             <p className="game__intro_text">{level.description}</p>
           </div>
 

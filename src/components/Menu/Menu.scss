@@ -52,9 +52,9 @@
   width: 100%;
   // min-height: 581px;
 
-  flex: 1 1 auto;
+  // flex: 1 1 auto;
   min-height: 0;
-  max-height: 580px;
+  max-height: 600px;
 
   display: flex;
   flex-direction: column;
@@ -69,7 +69,7 @@
   padding: 29px 0
     calc(
       var(--tg-content-safe-area-inset-bottom, 0px) +
-        var(--tg-safe-area-inset-bottom, 0px) + 36px
+        var(--tg-safe-area-inset-bottom, 0px)
     );
 
   position: relative;
@@ -330,6 +330,7 @@
   padding: 0 28px;
 
   margin-top: auto;
+  margin-bottom: 36px;
 }
 
 .menu__level_card_inner {
@@ -382,9 +383,207 @@
   display: block;
 }
 
+.menu[data-state="all-found"] .menu__content_main,
+.menu[data-state="finished"] .menu__content_main {
+  justify-content: flex-end;
+}
+
+.menu__result {
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+
+  padding: 0 22px;
+}
+
+.menu__result_card {
+  width: 100%;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  padding: 47px 25px 39px;
+
+  border-radius: 69px;
+
+  text-align: center;
+}
+
+.menu__result_check {
+  width: 69px;
+  height: 69px;
+
+  display: block;
+
+  margin-bottom: 18px;
+}
+
+.menu__result_title {
+  margin: 0 0 20px;
+
+  font-family: "MTSWideMedium";
+  font-size: 32px;
+  line-height: 36px;
+  letter-spacing: -1%;
+  font-weight: 500;
+
+  color: #000000;
+}
+
+.menu__result_text {
+  max-width: 260px;
+  margin: 0;
+
+  font-family: "MTSTextRegular";
+  font-size: 14px;
+  line-height: 18px;
+
+  color: #00000099;
+}
+
+.menu__result_buttons {
+  width: 100%;
+
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 36px;
+}
+
+.menu__finished {
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  flex-direction: column;
+
+  padding: 0 28px;
+}
+
+.menu__finished_title {
+  margin: 0 0 10px;
+
+  font-family: "MTSWideMedium";
+  font-size: 28px;
+  line-height: 30px;
+  letter-spacing: -1%;
+  font-weight: 500;
+
+  color: #000000;
+}
+
+.menu__finished_text {
+  margin: 0 0 21px;
+
+  font-family: "MTSTextRegular";
+  font-size: 14px;
+  line-height: 20px;
+
+  color: #000000;
+}
+
+.menu__winners {
+  width: 100%;
+
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  margin-top: 16px;
+  overflow-x: auto;
+}
+
+.menu__winner {
+  width: 100%;
+  min-height: 58px;
+
+  display: flex;
+  align-items: center;
+  gap: 9px;
+
+  padding: 8px 7.42px;
+
+  border-radius: 80px;
+
+  background-color: #ffffff;
+}
+
+.menu__winner_place {
+  width: 45px;
+  height: 45px;
+
+  flex: 0 0 auto;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #00000005;
+
+  font-family: "MTSWideMedium";
+  font-size: 14px;
+  line-height: 1;
+  font-weight: 500;
+
+  color: #000000;
+}
+
+.menu__winner--active .menu__winner_place {
+  background: #ff0032;
+  color: #ffffff;
+}
+
+.menu__winner_content {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.menu__winner_username {
+  margin: 0;
+
+  font-family: "MTSTextRegular";
+  font-size: 16px;
+  line-height: 18px;
+
+  color: #000000;
+}
+
+.menu__winner_wrap {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: 100%;
+  gap: 4px;
+}
+
+.menu__winner_prize {
+  width: 11.7px;
+  height: 13.24px;
+}
+
+.menu__winner_label {
+  margin: 0;
+
+  font-family: "MTSTextRegular";
+  font-size: 12px;
+  line-height: 18px;
+  letter-spacing: -1%;
+
+  color: #00000099;
+}
+
 @media (max-height: 720px) {
   .menu__content_main {
-    padding: 19px 0 24px;
+    padding: 19px 0 0;
     max-height: 500px;
   }
   .menu__content_main_header {
@@ -402,6 +601,7 @@
   .menu__content_main_btnblock {
     gap: 6px;
     margin-top: 0;
+    margin-bottom: 16px;
   }
 
   .menu__level_wheel {
@@ -431,6 +631,49 @@
 
     // margin-top: 24px;
     // margin-bottom: 40px;
+  }
+  .menu__result_card {
+    padding: 34px 22px 30px;
+  }
+
+  .menu__result_check {
+    width: 60px;
+    height: 60px;
+    margin-bottom: 14px;
+  }
+
+  .menu__result_title {
+    font-size: 28px;
+    line-height: 30px;
+  }
+
+  .menu__result_text {
+    font-size: 13px;
+    line-height: 16px;
+  }
+
+  .menu__finished_title {
+    margin-bottom: 12px;
+
+    font-size: 23px;
+    line-height: 27px;
+  }
+
+  // .menu__finished_text {
+  //   margin-bottom: 14px;
+
+  //   font-size: 11px;
+  //   line-height: 14px;
+  // }
+
+  .menu__winners {
+    gap: 6px;
+    margin-top: 12px;
+  }
+
+  .menu__winner {
+    min-height: 52px;
+    padding: 8px 14px;
   }
 }
 
@@ -462,7 +705,57 @@
     padding: 12px 16px 16px;
   }
 
-    .menu__level_pointer {
+  .menu__level_pointer {
     bottom: -20px;
+  }
+
+  .menu__result_card {
+    padding: 26px 20px 24px;
+  }
+
+  .menu__result_check {
+    width: 52px;
+    height: 52px;
+    margin-bottom: 12px;
+  }
+
+  .menu__result_title {
+    font-size: 24px;
+    line-height: 27px;
+  }
+
+  .menu__result_text {
+    font-size: 12px;
+    line-height: 15px;
+  }
+
+  .menu__finished_title {
+    font-size: 20px;
+    line-height: 23px;
+  }
+
+  .menu__finished_text {
+    font-size: 14px;
+    line-height: 15px;
+  }
+
+  .menu__winner {
+    min-height: 46px;
+  }
+
+  .menu__winner_place {
+    width: 32px;
+    height: 32px;
+
+    font-size: 12px;
+  }
+
+  .menu__winner_username {
+    font-size: 12px;
+    line-height: 14px;
+  }
+
+    .menu__content_main_btnblock {
+    // margin-bottom: 10px;
   }
 }

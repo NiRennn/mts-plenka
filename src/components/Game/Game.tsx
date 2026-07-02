@@ -264,6 +264,7 @@ function Game() {
       data-started={isStarted}
       data-found={isFound}
       data-time-over={isTimeOver}
+      data-exit-confirm={isExitConfirmOpen}
       data-debug-target={DEBUG_TARGET}
     >
       <div

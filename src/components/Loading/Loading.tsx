@@ -12,7 +12,7 @@ import { preloadImageSrcs } from "../../utils/preload";
 import { APP_PRELOAD_IMAGES } from "../../data/preloadImages";
 
 const MIN_LOADING_DELAY = 3000;
-const PRELOAD_HARD_TIMEOUT = 7000;
+// const PRELOAD_HARD_TIMEOUT = 7000;
 
 const delay = (ms: number) =>
   new Promise((resolve) => {
@@ -146,18 +146,16 @@ function Loading() {
         startParam,
       );
 
-      const preloadWithTimeout = Promise.race([
-        preloadImages(),
-        delay(PRELOAD_HARD_TIMEOUT).then(() => {
-          console.warn("[preload] hard timeout");
-        }),
-      ]);
-
-      const [userDataResult] = await Promise.allSettled([
+      const [userDataResult, preloadResult] = await Promise.allSettled([
         userDataPromise,
-        preloadWithTimeout,
+        preloadImages(),
         minDelay,
       ]);
+
+      if (preloadResult.status !== "fulfilled") {
+        console.error("Error preloading images:", preloadResult.reason);
+        return;
+      }
 
       if (cancelled) return;
 

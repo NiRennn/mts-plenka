@@ -72,7 +72,7 @@ function Loading() {
     };
 
     const effectiveUserId = getEffectiveUserId();
-    // const initData = tg?.initData ?? "";
+    const initData = tg?.initData ?? "";
     const startParam =
       tg?.initDataUnsafe?.start_param ??
       new URLSearchParams(window.location.search).get("start_param") ??
@@ -83,7 +83,7 @@ function Loading() {
 
     // (window as any).__uid = effectiveUserId ?? null;
 
-    // console.log(initData)
+    console.log(initData)
 
     // preloadImageSrcs(ONBOARDING_IMAGES).then((results) => {
     //   const failed = results.filter((r) => !r.ok).map((r) => r.src);

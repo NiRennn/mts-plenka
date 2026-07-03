@@ -74,9 +74,9 @@
   z-index: 3;
   border-radius: 40px;
   background: rgba(255, 255, 255, 0.28);
+  -webkit-backdrop-filter: blur(72px);
 
   backdrop-filter: blur(72px);
-  -webkit-backdrop-filter: blur(72px);
   padding-top: 29px;
   margin-bottom: -40px;
 }
@@ -151,7 +151,6 @@
   letter-spacing: -0.22px;
   color: #000000;
   font-weight: 500;
-
 }
 
 .info__middle {
@@ -194,8 +193,9 @@
 
   position: relative;
   z-index: 2;
-  backdrop-filter: blur(155px);
   -webkit-backdrop-filter: blur(155px);
+
+  backdrop-filter: blur(155px);
 }
 
 .info__faq_title {
@@ -205,7 +205,6 @@
   letter-spacing: -1%;
   color: #000000;
   font-weight: 500;
-
 
   margin-bottom: 26px;
   padding-left: 17px;

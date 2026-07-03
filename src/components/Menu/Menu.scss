@@ -252,6 +252,37 @@
   font-weight: 500;
 }
 
+.menu__level_card {
+  --level-card-radius: 40px;
+
+  border-radius: var(--level-card-radius);
+  overflow: hidden;
+
+  isolation: isolate;
+  contain: paint;
+
+  -webkit-mask-image: -webkit-radial-gradient(#ffffff, #000000);
+  clip-path: inset(0 round var(--level-card-radius));
+
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+.menu__level_card_inner,
+.menu__level_card_passed {
+  border-radius: inherit;
+  overflow: hidden;
+}
+
+.menu__level_card_passed {
+  clip-path: inset(0 round var(--level-card-radius));
+}
+
+.menu__level_card[data-passed="true"] .menu__level_card_inner {
+  filter: blur(2px);
+  transform: scale(1.02);
+}
+
 // .menu__level_card {
 //   background: #ffffff;
 // }

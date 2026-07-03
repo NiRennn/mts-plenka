@@ -22,7 +22,11 @@ const delay = (ms: number) =>
 function Loading() {
   const navigate = useNavigate();
 
-  const pickNextRoute = (user: UserDto | null) => {
+  const pickNextRoute = (user: UserDto | null, winners?: unknown[]) => {
+    if (Array.isArray(winners) && winners.length > 0) {
+      return appRoutes.MENU;
+    }
+
     if (user?.rule && user?.subs) {
       return appRoutes.MENU;
     }
@@ -171,7 +175,7 @@ function Loading() {
         return;
       }
 
-      go(pickNextRoute(userData.user));
+      go(pickNextRoute(userData.user, userData.winners));
     };
 
     init();

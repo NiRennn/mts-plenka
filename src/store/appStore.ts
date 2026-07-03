@@ -20,6 +20,7 @@ export type LocationProgressDto = {
 export type GetUserDataResponse = {
   user: UserDto | null;
   locations?: LocationProgressDto[];
+  winners?: WinnerDto[];
 };
 
 export type AnswerDto = {
@@ -27,52 +28,33 @@ export type AnswerDto = {
   text: string;
 };
 
-export type QuestionDto = {
-  id: number;
-  picture: string;
-  picture_overlay: string;
-  answers: AnswerDto[];
-};
-
-export type FinalResultDto = {
-  id: number;
-  picture: string;
-  text: string;
-  promocode_text: string;
-  promocode: string | null;
-  promocode_ended_text: string;
-};
-
-export type FinalResponseDto = {
-  success: boolean;
-  correct_answers: number;
-  total_questions: number;
-  result: FinalResultDto;
+export type WinnerDto = {
+  user_id: number;
+  username: string | null;
+  first_name: string | null;
 };
 
 type AppState = {
   user: UserDto | null;
   locations: LocationProgressDto[];
-  questions: QuestionDto[];
+  winners: WinnerDto[];
   isHydrated: boolean;
 
   selectedAnswersByQuestion: Record<number, number>;
-  finalResponse: FinalResponseDto | null;
 
   setUser: (user: UserDto | null) => void;
   setUserSubs: (subs: boolean) => void;
   setUserRule: (rule: boolean) => void;
 
   setLocations: (locations: LocationProgressDto[]) => void;
+  setWinners: (winners: WinnerDto[]) => void;
   upsertLocationProgress: (location: string, isSuccess: boolean) => void;
 
-  setQuestions: (questions: QuestionDto[]) => void;
   hydrateFromServer: (data: GetUserDataResponse) => void;
 
   setAnswer: (questionId: number, answerId: number) => void;
   resetTestProgress: () => void;
 
-  setFinalResponse: (data: FinalResponseDto | null) => void;
   reset: () => void;
 };
 
@@ -80,6 +62,7 @@ const initialState = {
   user: null,
   locations: [],
   questions: [],
+  winners: [],
   isHydrated: false,
   selectedAnswersByQuestion: {},
   finalResponse: null,
@@ -115,6 +98,11 @@ export const useAppStore = create<AppState>((set) => ({
       locations,
     }),
 
+  setWinners: (winners) =>
+    set({
+      winners,
+    }),
+
   upsertLocationProgress: (location, isSuccess) =>
     set((state) => {
       const currentLocation = state.locations.find(
@@ -147,15 +135,13 @@ export const useAppStore = create<AppState>((set) => ({
       };
     }),
 
-  setQuestions: (questions) => set({ questions }),
-
   hydrateFromServer: (data) =>
     set({
       user: data.user ?? null,
       locations: Array.isArray(data.locations) ? data.locations : [],
+      winners: Array.isArray(data.winners) ? data.winners : [],
       isHydrated: true,
       selectedAnswersByQuestion: {},
-      finalResponse: null,
     }),
 
   setAnswer: (questionId, answerId) =>
@@ -169,10 +155,7 @@ export const useAppStore = create<AppState>((set) => ({
   resetTestProgress: () =>
     set({
       selectedAnswersByQuestion: {},
-      finalResponse: null,
     }),
-
-  setFinalResponse: (data) => set({ finalResponse: data }),
 
   reset: () => set(initialState),
 }));

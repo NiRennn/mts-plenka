@@ -24,36 +24,6 @@ import { useAppStore } from "../../store/appStore";
 const CHANNEL_URL = "https://t.me/+X_Y-xncYDCAzZTJi";
 const CHANNEL_MTS_URL = "https://vk.com/mts";
 
-const IS_DRAW_FINISHED = true;
-
-const winners = [
-  {
-    id: 1,
-    username: "@username",
-    isCurrentUser: false,
-  },
-  {
-    id: 2,
-    username: "@username",
-    isCurrentUser: false,
-  },
-  {
-    id: 3,
-    username: "@anotherUser",
-    isCurrentUser: true,
-  },
-  {
-    id: 4,
-    username: "@anotherUser",
-    isCurrentUser: false,
-  },
-  {
-    id: 5,
-    username: "@anotherUser",
-    isCurrentUser: false,
-  },
-];
-
 const levels = [
   {
     id: 1,
@@ -91,6 +61,8 @@ type MenuContentState = "game" | "all-found" | "finished";
 
 function Menu() {
   const navigate = useNavigate();
+  const winners = useAppStore((state) => state.winners);
+  const user = useAppStore((state) => state.user);
 
   const locations = useAppStore((state) => state.locations);
 
@@ -109,7 +81,9 @@ function Menu() {
 
   const isAllLevelsPassed = passedLevelsCount >= levels.length;
 
-  const menuContentState: MenuContentState = IS_DRAW_FINISHED
+  const isDrawFinished = winners.length > 0;
+
+  const menuContentState: MenuContentState = isDrawFinished
     ? "finished"
     : isAllLevelsPassed
       ? "all-found"
@@ -344,27 +318,35 @@ function Menu() {
         </Button>
 
         <div className="menu__winners">
-          {winners.map((winner) => (
-            <div
-              key={winner.id}
-              className={`menu__winner ${
-                winner.isCurrentUser ? "menu__winner--active" : ""
-              }`}
-            >
-              <div className="menu__winner_place">{winner.id}</div>
+          {winners.map((winner, index) => {
+            const isCurrentUser = user?.user_id === winner.user_id;
 
-              <div className="menu__winner_content">
-                <p className="menu__winner_username">{winner.username}</p>
+            const username = winner.username
+              ? `@${winner.username.replace(/^@/, "")}`
+              : winner.first_name || "Участник";
 
-                {winner.isCurrentUser && (
-                  <div className="menu__winner_wrap">
-                    <img src={win} alt="" className="menu__winner_prize" />
-                    <p className="menu__winner_label">Вы победитель</p>
-                  </div>
-                )}
+            return (
+              <div
+                key={`${winner.user_id}-${index}`}
+                className={`menu__winner ${
+                  isCurrentUser ? "menu__winner--active" : ""
+                }`}
+              >
+                <div className="menu__winner_place">{index + 1}</div>
+
+                <div className="menu__winner_content">
+                  <p className="menu__winner_username">{username}</p>
+
+                  {isCurrentUser && (
+                    <div className="menu__winner_wrap">
+                      <img src={win} alt="" className="menu__winner_prize" />
+                      <p className="menu__winner_label">Вы победитель</p>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     );

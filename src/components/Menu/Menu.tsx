@@ -33,8 +33,8 @@ const levels = [
   },
   {
     id: 2,
-    title: "МОДНАЯ КОФЕЙНЯ",
-    location: "МОДНАЯ КОФЕЙНЯ",
+    title: "КОФЕЙНЯ",
+    location: "КОФЕЙНЯ",
     image: cafe,
   },
   {
@@ -287,7 +287,7 @@ function Menu() {
         </div>
 
         <div className="menu__result_buttons">
-          <Button variant="secondary2" onClick={handleOpenChannel}>
+          <Button variant="primary" onClick={handleOpenChannel}>
             Канал РИИЛ
           </Button>
 
@@ -307,10 +307,10 @@ function Menu() {
         </h1>
 
         <p className="menu__finished_text">
-          Если ты нашёл себя в&nbsp;списке призёров&nbsp;— напиши нам
-          в&nbsp;личные сообщения сообщества МТС в&nbsp;ВК, укажи своё ФИО
-          и&nbsp;название приза&nbsp;— мы свяжемся с&nbsp;вами и&nbsp;расскажем,
-          как его получить. Спасибо за&nbsp;участие!
+          Если ты нашёл себя в&nbsp;списке призёров, напиши нам в&nbsp;личные
+          сообщения сообщества МТС в&nbsp;ВК, укажи своё ФИО и&nbsp;название
+          приза&nbsp;— мы свяжемся с&nbsp;вами и&nbsp;расскажем, как его
+          получить. Спасибо за&nbsp;участие!
         </p>
 
         <Button variant="secondary2" onClick={handleOpenLink}>

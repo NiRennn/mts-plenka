@@ -89,9 +89,9 @@ export const gameLevels: GameLevel[] = [
   {
     id: 2,
     title: "КОФЕЙНЯ", 
-    apiLocation: "МОДНАЯ КОФЕЙНЯ",
+    apiLocation: "КОФЕЙНЯ",
 
-    menuTitle: "МОДНАЯ КОФЕЙНЯ",
+    menuTitle: "КОФЕЙНЯ",
     description:
       "Ты\u00A0зашёл в\u00A0модную кофейню за\u00A0своим фильтр-кофе. Посмотри внимательнее по\u00A0сторонам, где‑то тут спрятана катушка плёнки…",
     variants: [

@@ -1,5 +1,5 @@
 import { useAppStore } from "../store/appStore";
-
+import { getTelegramAuthHeaders } from "./telegramAuth";
 const API_ORIGIN = "https://plenka.brandservicebot24.ru";
 
 export type CheckSubscriptionResponse = {
@@ -14,6 +14,7 @@ export const checkUserSubscription = async (
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+       ...getTelegramAuthHeaders(),
     },
     body: JSON.stringify({
       user_id: Number(userId),

@@ -1,6 +1,7 @@
 import { useAppStore } from "../store/appStore";
 
 const API_ORIGIN = "https://plenka.brandservicebot24.ru";
+import { getTelegramAuthHeaders } from "./telegramAuth";
 
 export type SaveGameResultPayload = {
   user_id: number;
@@ -19,6 +20,7 @@ export const saveGameResult = async (
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      ...getTelegramAuthHeaders(),
     },
     body: JSON.stringify(payload),
   });

@@ -1,5 +1,6 @@
 import { useAppStore } from "../store/appStore";
 import type { GetUserDataResponse } from "../store/appStore";
+import { getTelegramAuthHeaders } from "./telegramAuth";
 
 const API_ORIGIN = "https://plenka.brandservicebot24.ru";
 
@@ -17,6 +18,9 @@ export const fetchAndHydrateUserData = async (
 
   const response = await fetch(url.toString(), {
     method: "GET",
+    headers: {
+      ...getTelegramAuthHeaders(),
+    },
   });
 
   if (!response.ok) {

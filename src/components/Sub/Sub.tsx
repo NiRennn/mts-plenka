@@ -12,7 +12,7 @@ import appRoutes from "../../routes/routes";
 
 type CheckStatus = "idle" | "checking" | "not-found";
 
-const CHANNEL_URL = "https://t.me/+X_Y-xncYDCAzZTJi";
+const CHANNEL_URL = "https://t.me/eto_riil";
 
 function Sub() {
   const navigate = useNavigate();

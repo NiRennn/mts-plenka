@@ -35,7 +35,7 @@ import quest from "../../assets/icons/quest.png";
 
 const GAME_TIME_SECONDS = 5 * 60;
 
-const DEBUG_TARGET = true;
+const DEBUG_TARGET = false;
 
 type GameLocationState = {
   levelId?: number;

@@ -21,7 +21,7 @@ import foundPlenka from "../../assets/icons/done-plenka.png";
 
 import { useAppStore } from "../../store/appStore";
 
-const CHANNEL_URL = "https://t.me/+X_Y-xncYDCAzZTJi";
+const CHANNEL_URL = "https://t.me/eto_riil";
 const CHANNEL_MTS_URL = "https://vk.com/mts";
 
 const levels = [

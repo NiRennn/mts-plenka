@@ -38,6 +38,9 @@ const faqItems: FaqItem[] = [
   },
 ];
 
+const CHANNEL_URL = "https://t.me/eto_riil";
+
+
 function Info() {
   const [openedFaqId, setOpenedFaqId] = useState<number>(1);
   const navigate = useNavigate();
@@ -67,6 +70,17 @@ function Info() {
 
   const handleToggleFaq = (id: number) => {
     setOpenedFaqId((prev) => (prev === id ? 0 : id));
+  };
+
+    const handleOpenRiil = () => {
+    const tg = (window as any)?.Telegram?.WebApp;
+
+    if (tg?.openTelegramLink) {
+      tg.openTelegramLink(CHANNEL_URL);
+      return;
+    }
+
+    window.open(CHANNEL_URL, "_blank", "noopener,noreferrer");
   };
 
   return (
@@ -166,7 +180,7 @@ function Info() {
           </div>
 
           <div className="info__buttons">
-            <Button variant="primary">В канал РИИЛ</Button>
+            <Button variant="primary" onClick={handleOpenRiil}>В канал РИИЛ</Button>
             <Button variant="secondary2">Правила розыгрыша</Button>
           </div>
         </section>

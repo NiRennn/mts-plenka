@@ -152,7 +152,7 @@ export const gameLevels: GameLevel[] = [
         id: 4,
         image: picnic4,
         sceneWidth: 900,
-        target: { x: 91.5, y: 80, width: 2, height: 4 },
+        target: { x: 89.5, y: 77.5, width: 2, height: 4 },
       },
     ],
     location: "Локация В",

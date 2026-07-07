@@ -33,7 +33,7 @@ import finger from "../../assets/icons/finger.png";
 import cross from "../../assets/icons/cross.png";
 import quest from "../../assets/icons/quest.png";
 
-const GAME_TIME_SECONDS = 5 * 60;
+const GAME_TIME_SECONDS = 1 * 60;
 
 const DEBUG_TARGET = false;
 

@@ -34,7 +34,7 @@ import quest from "../../assets/icons/quest.png";
 
 const GAME_TIME_SECONDS = 1 * 60;
 
-const DEBUG_TARGET = true;
+const DEBUG_TARGET = false;
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 3;
 const WHEEL_ZOOM_SPEED = 0.0012;
@@ -149,6 +149,9 @@ function Game() {
 
   const canMoveScene =
     isStarted && !isFound && !isTimeOver && !isExitConfirmOpen;
+
+    const shouldShowTelegramBackButton =
+  isStarted && !isFound && !isTimeOver && !isExitConfirmOpen;
 
   const clampZoom = (value: number) => {
     return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, value));
@@ -543,20 +546,26 @@ function Game() {
     resetSceneView();
   };
 
-  useEffect(() => {
-    const tg = (window as any)?.Telegram?.WebApp;
-    const backButton = tg?.BackButton;
+useEffect(() => {
+  const tg = (window as any)?.Telegram?.WebApp;
+  const backButton = tg?.BackButton;
 
-    if (!backButton) return;
+  if (!backButton) return;
 
-    backButton.show();
-    backButton.onClick(handleOpenExitConfirm);
+  if (!shouldShowTelegramBackButton) {
+    backButton.offClick(handleOpenExitConfirm);
+    backButton.hide();
+    return;
+  }
 
-    return () => {
-      backButton.offClick(handleOpenExitConfirm);
-      backButton.hide();
-    };
-  }, [handleOpenExitConfirm]);
+  backButton.show();
+  backButton.onClick(handleOpenExitConfirm);
+
+  return () => {
+    backButton.offClick(handleOpenExitConfirm);
+    backButton.hide();
+  };
+}, [shouldShowTelegramBackButton, handleOpenExitConfirm]);
 
   useEffect(() => {
     if (!isStarted || isFound || isTimeOver || isExitConfirmOpen) return;

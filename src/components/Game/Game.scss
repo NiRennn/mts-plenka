@@ -16,15 +16,13 @@
 
   overflow: auto;
 
-  -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
+
   touch-action: pan-x pan-y pinch-zoom;
 
   scrollbar-width: none;
 
-  transition:
-    filter 0.35s ease,
-    transform 0.35s ease;
+  transition: filter 0.35s ease;
 }
 
 .game[data-started="true"] .game__scene {
@@ -46,6 +44,15 @@
 .game[data-exit-confirm="true"] .game__scene {
   filter: blur(9px);
   // transform: scale(1.03);
+}
+
+.game[data-started="true"] .game__target,
+.game[data-started="true"] .game__target::before {
+  cursor: pointer;
+}
+
+.game[data-started="true"] .game__scene:has(.game__target:hover) {
+  cursor: pointer;
 }
 
 .game__scene_inner {

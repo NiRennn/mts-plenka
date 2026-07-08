@@ -4,8 +4,8 @@ import {
   useMemo,
   useRef,
   useState,
-  type CSSProperties,
   type MouseEvent,
+  // type WheelEvent,
 } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import "./Game.scss";
@@ -35,17 +35,10 @@ import quest from "../../assets/icons/quest.png";
 
 const GAME_TIME_SECONDS = 1 * 60;
 
-const DEBUG_TARGET = false;
-
-const MIN_PC_ZOOM = 1;
-const MAX_PC_ZOOM = 3;
-const PC_ZOOM_SENSITIVITY = 0.0015;
-
-// const PC_ZOOM_SENSITIVITY = 0.0015;
-
-function clamp(value: number, min: number, max: number) {
-  return Math.min(Math.max(value, min), max);
-}
+const DEBUG_TARGET = true;
+const MIN_ZOOM = 1;
+const MAX_ZOOM = 3;
+const ZOOM_STEP = 0.15;
 
 type GameLocationState = {
   levelId?: number;
@@ -64,7 +57,6 @@ function Game() {
 
   const resultSentRef = useRef(false);
   const sceneRef = useRef<HTMLDivElement | null>(null);
-
   const dragStateRef = useRef({
     isDragging: false,
     startX: 0,
@@ -74,27 +66,9 @@ function Game() {
     didMove: false,
   });
 
-  const [pcZoom, setPcZoom] = useState(1);
-  const pcZoomRef = useRef(1);
-
-  const setPcZoomValue = useCallback((value: number) => {
-    pcZoomRef.current = value;
-    setPcZoom(value);
-  }, []);
-
-  const sceneInnerStyle = useMemo<CSSProperties>(() => {
-    return {
-      height: `${pcZoom * 100}%`,
-    };
-  }, [pcZoom]);
-
-  //   const nextZoom = clamp(
-  //   currentZoom * Math.exp(-event.deltaY * PC_ZOOM_SENSITIVITY),
-  //   MIN_PC_ZOOM,
-  //   MAX_PC_ZOOM,
-  // );
-
   const [isSceneDragging, setIsSceneDragging] = useState(false);
+  const [zoom, setZoom] = useState(1);
+  const zoomRef = useRef(1);
   const [isStarted, setIsStarted] = useState(false);
   const [isFound, setIsFound] = useState(false);
   const [timeLeft, setTimeLeft] = useState(GAME_TIME_SECONDS);
@@ -164,34 +138,38 @@ function Game() {
 
     if (!scene) return;
 
+    const clampZoom = (value: number) => {
+      return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, value));
+    };
+
     const handleWheel = (event: globalThis.WheelEvent) => {
       if (!canMoveScene) return;
 
       event.preventDefault();
 
+      const previousZoom = zoomRef.current;
+
+      const direction = event.deltaY < 0 ? 1 : -1;
+      const nextZoom = clampZoom(previousZoom + direction * ZOOM_STEP);
+
+      if (nextZoom === previousZoom) return;
+
       const rect = scene.getBoundingClientRect();
 
-      const localX = event.clientX - rect.left;
-      const localY = event.clientY - rect.top;
+      const pointerX = event.clientX - rect.left;
+      const pointerY = event.clientY - rect.top;
 
-      const currentZoom = pcZoomRef.current;
+      const contentX = scene.scrollLeft + pointerX;
+      const contentY = scene.scrollTop + pointerY;
 
-      const nextZoom = clamp(
-        currentZoom * Math.exp(-event.deltaY * PC_ZOOM_SENSITIVITY),
-        MIN_PC_ZOOM,
-        MAX_PC_ZOOM,
-      );
+      const zoomRatio = nextZoom / previousZoom;
 
-      if (nextZoom === currentZoom) return;
-
-      const contentX = (scene.scrollLeft + localX) / currentZoom;
-      const contentY = (scene.scrollTop + localY) / currentZoom;
-
-      setPcZoomValue(nextZoom);
+      zoomRef.current = nextZoom;
+      setZoom(nextZoom);
 
       requestAnimationFrame(() => {
-        scene.scrollLeft = contentX * nextZoom - localX;
-        scene.scrollTop = contentY * nextZoom - localY;
+        scene.scrollLeft = contentX * zoomRatio - pointerX;
+        scene.scrollTop = contentY * zoomRatio - pointerY;
       });
     };
 
@@ -202,7 +180,7 @@ function Game() {
     return () => {
       scene.removeEventListener("wheel", handleWheel);
     };
-  }, [canMoveScene, setPcZoomValue]);
+  }, [canMoveScene]);
 
   const handleOpenExitConfirm = useCallback(() => {
     setIsExitConfirmOpen(true);
@@ -259,21 +237,23 @@ function Game() {
     setIsSceneDragging(false);
   };
 
+  const resetSceneView = () => {
+    zoomRef.current = 1;
+    setZoom(1);
+
+    requestAnimationFrame(() => {
+      sceneRef.current?.scrollTo({
+        left: 0,
+        top: 0,
+        behavior: "instant",
+      });
+    });
+  };
+
   const handleBack = () => {
     // handleOpenExitConfirm();
     navigate(appRoutes.MENU, { replace: true });
   };
-
-  const resetSceneView = useCallback(() => {
-    setPcZoomValue(1);
-
-    requestAnimationFrame(() => {
-      if (!sceneRef.current) return;
-
-      sceneRef.current.scrollLeft = 0;
-      sceneRef.current.scrollTop = 0;
-    });
-  }, [setPcZoomValue]);
 
   const handleStart = () => {
     resultSentRef.current = false;
@@ -367,9 +347,16 @@ function Game() {
         onMouseUp={stopSceneDrag}
         onMouseLeave={stopSceneDrag}
       >
-        <div className="game__scene_inner" style={sceneInnerStyle}>
+        {" "}
+        <div
+          className="game__scene_inner"
+          style={{
+            height: `${zoom * 100}%`,
+            minWidth: `${zoom * 100}vw`,
+          }}
+        >
+          {" "}
           <img src={variant.image} alt="" className="game__image" />
-
           <button
             type="button"
             className="game__target"
@@ -378,6 +365,10 @@ function Game() {
               top: `${variant.target.y}%`,
               width: `${variant.target.width}%`,
               height: `${variant.target.height}%`,
+            }}
+            onMouseDown={(event) => {
+              dragStateRef.current.didMove = false;
+              event.stopPropagation();
             }}
             onClick={handleFindPlenka}
             aria-label="Найти плёнку"

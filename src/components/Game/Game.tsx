@@ -4,8 +4,8 @@ import {
   useMemo,
   useRef,
   useState,
+  type CSSProperties,
   type MouseEvent,
-  // type WheelEvent,
 } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import "./Game.scss";
@@ -37,6 +37,16 @@ const GAME_TIME_SECONDS = 1 * 60;
 
 const DEBUG_TARGET = false;
 
+const MIN_PC_ZOOM = 1;
+const MAX_PC_ZOOM = 3;
+const PC_ZOOM_SENSITIVITY = 0.0015;
+
+// const PC_ZOOM_SENSITIVITY = 0.0015;
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
+}
+
 type GameLocationState = {
   levelId?: number;
 };
@@ -46,29 +56,7 @@ const getRandomVariant = (level: GameLevel): GameVariant => {
   return level.variants[randomIndex];
 };
 
-export function useGameViewportZoom() {
-  useEffect(() => {
-    const viewport = document.querySelector<HTMLMetaElement>(
-      'meta[name="viewport"]',
-    );
-
-    if (!viewport) return;
-
-    const previousContent = viewport.getAttribute("content") ?? "";
-
-    viewport.setAttribute(
-      "content",
-      "width=device-width, initial-scale=1.0, maximum-scale=4.0, user-scalable=yes, viewport-fit=cover",
-    );
-
-    return () => {
-      viewport.setAttribute("content", previousContent);
-    };
-  }, []);
-}
-
 function Game() {
-  useGameViewportZoom();
   const navigate = useNavigate();
   const location = useLocation();
   const user = useAppStore((state) => state.user);
@@ -76,12 +64,35 @@ function Game() {
 
   const resultSentRef = useRef(false);
   const sceneRef = useRef<HTMLDivElement | null>(null);
+
   const dragStateRef = useRef({
     isDragging: false,
     startX: 0,
+    startY: 0,
     scrollLeft: 0,
+    scrollTop: 0,
     didMove: false,
   });
+
+  const [pcZoom, setPcZoom] = useState(1);
+  const pcZoomRef = useRef(1);
+
+  const setPcZoomValue = useCallback((value: number) => {
+    pcZoomRef.current = value;
+    setPcZoom(value);
+  }, []);
+
+  const sceneInnerStyle = useMemo<CSSProperties>(() => {
+    return {
+      height: `${pcZoom * 100}%`,
+    };
+  }, [pcZoom]);
+
+  //   const nextZoom = clamp(
+  //   currentZoom * Math.exp(-event.deltaY * PC_ZOOM_SENSITIVITY),
+  //   MIN_PC_ZOOM,
+  //   MAX_PC_ZOOM,
+  // );
 
   const [isSceneDragging, setIsSceneDragging] = useState(false);
   const [isStarted, setIsStarted] = useState(false);
@@ -156,18 +167,32 @@ function Game() {
     const handleWheel = (event: globalThis.WheelEvent) => {
       if (!canMoveScene) return;
 
-      if (event.ctrlKey || event.metaKey) {
-        return;
-      }
-
-      const delta =
-        Math.abs(event.deltaY) > Math.abs(event.deltaX)
-          ? event.deltaY
-          : event.deltaX;
-
-      scene.scrollLeft += delta;
-
       event.preventDefault();
+
+      const rect = scene.getBoundingClientRect();
+
+      const localX = event.clientX - rect.left;
+      const localY = event.clientY - rect.top;
+
+      const currentZoom = pcZoomRef.current;
+
+      const nextZoom = clamp(
+        currentZoom * Math.exp(-event.deltaY * PC_ZOOM_SENSITIVITY),
+        MIN_PC_ZOOM,
+        MAX_PC_ZOOM,
+      );
+
+      if (nextZoom === currentZoom) return;
+
+      const contentX = (scene.scrollLeft + localX) / currentZoom;
+      const contentY = (scene.scrollTop + localY) / currentZoom;
+
+      setPcZoomValue(nextZoom);
+
+      requestAnimationFrame(() => {
+        scene.scrollLeft = contentX * nextZoom - localX;
+        scene.scrollTop = contentY * nextZoom - localY;
+      });
     };
 
     scene.addEventListener("wheel", handleWheel, {
@@ -177,7 +202,7 @@ function Game() {
     return () => {
       scene.removeEventListener("wheel", handleWheel);
     };
-  }, [canMoveScene]);
+  }, [canMoveScene, setPcZoomValue]);
 
   const handleOpenExitConfirm = useCallback(() => {
     setIsExitConfirmOpen(true);
@@ -202,7 +227,9 @@ function Game() {
     dragStateRef.current = {
       isDragging: true,
       startX: event.clientX,
+      startY: event.clientY,
       scrollLeft: sceneRef.current.scrollLeft,
+      scrollTop: sceneRef.current.scrollTop,
       didMove: false,
     };
 
@@ -214,13 +241,17 @@ function Game() {
 
     if (!sceneRef.current || !dragState.isDragging) return;
 
-    const diff = event.clientX - dragState.startX;
+    event.preventDefault();
 
-    if (Math.abs(diff) > 3) {
+    const diffX = event.clientX - dragState.startX;
+    const diffY = event.clientY - dragState.startY;
+
+    if (Math.abs(diffX) > 3 || Math.abs(diffY) > 3) {
       dragState.didMove = true;
     }
 
-    sceneRef.current.scrollLeft = dragState.scrollLeft - diff;
+    sceneRef.current.scrollLeft = dragState.scrollLeft - diffX;
+    sceneRef.current.scrollTop = dragState.scrollTop - diffY;
   };
 
   const stopSceneDrag = () => {
@@ -233,17 +264,23 @@ function Game() {
     navigate(appRoutes.MENU, { replace: true });
   };
 
+  const resetSceneView = useCallback(() => {
+    setPcZoomValue(1);
+
+    requestAnimationFrame(() => {
+      if (!sceneRef.current) return;
+
+      sceneRef.current.scrollLeft = 0;
+      sceneRef.current.scrollTop = 0;
+    });
+  }, [setPcZoomValue]);
+
   const handleStart = () => {
     resultSentRef.current = false;
     setIsExitConfirmOpen(false);
     setIsStarted(true);
 
-    requestAnimationFrame(() => {
-      sceneRef.current?.scrollTo({
-        left: 0,
-        behavior: "instant",
-      });
-    });
+    resetSceneView();
   };
 
   const handleFindPlenka = async () => {
@@ -269,12 +306,7 @@ function Game() {
     setIsFound(false);
     setIsExitConfirmOpen(false);
 
-    requestAnimationFrame(() => {
-      sceneRef.current?.scrollTo({
-        left: 0,
-        behavior: "instant",
-      });
-    });
+    resetSceneView();
   };
 
   useEffect(() => {
@@ -335,8 +367,7 @@ function Game() {
         onMouseUp={stopSceneDrag}
         onMouseLeave={stopSceneDrag}
       >
-        {" "}
-        <div className="game__scene_inner">
+        <div className="game__scene_inner" style={sceneInnerStyle}>
           <img src={variant.image} alt="" className="game__image" />
 
           <button

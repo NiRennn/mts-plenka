@@ -4,8 +4,7 @@ import {
   useMemo,
   useRef,
   useState,
-  type MouseEvent,
-  // type WheelEvent,
+  type PointerEvent,
 } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import "./Game.scss";
@@ -38,7 +37,7 @@ const GAME_TIME_SECONDS = 1 * 60;
 const DEBUG_TARGET = true;
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 3;
-const ZOOM_STEP = 0.15;
+const WHEEL_ZOOM_SPEED = 0.0012;
 
 type GameLocationState = {
   levelId?: number;
@@ -57,14 +56,32 @@ function Game() {
 
   const resultSentRef = useRef(false);
   const sceneRef = useRef<HTMLDivElement | null>(null);
+
+  const pointersRef = useRef(
+    new Map<number, { x: number; y: number; pointerType: string }>(),
+  );
+
   const dragStateRef = useRef({
     isDragging: false,
+    pointerId: null as number | null,
     startX: 0,
     startY: 0,
     scrollLeft: 0,
     scrollTop: 0,
     didMove: false,
   });
+
+  const pinchStateRef = useRef({
+    isPinching: false,
+    startDistance: 0,
+    startZoom: 1,
+    lastCenterX: 0,
+    lastCenterY: 0,
+  });
+
+  const wheelFrameRef = useRef<number | null>(null);
+  const wheelDeltaRef = useRef(0);
+  const wheelPointRef = useRef({ x: 0, y: 0 });
 
   const [isSceneDragging, setIsSceneDragging] = useState(false);
   const [zoom, setZoom] = useState(1);
@@ -133,31 +150,46 @@ function Game() {
   const canMoveScene =
     isStarted && !isFound && !isTimeOver && !isExitConfirmOpen;
 
-  useEffect(() => {
-    const scene = sceneRef.current;
+  const clampZoom = (value: number) => {
+    return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, value));
+  };
 
-    if (!scene) return;
+  const getPointersArray = () => {
+    return Array.from(pointersRef.current.values());
+  };
 
-    const clampZoom = (value: number) => {
-      return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, value));
+  const getDistance = (
+    first: { x: number; y: number },
+    second: { x: number; y: number },
+  ) => {
+    return Math.hypot(second.x - first.x, second.y - first.y);
+  };
+
+  const getCenter = (
+    first: { x: number; y: number },
+    second: { x: number; y: number },
+  ) => {
+    return {
+      x: (first.x + second.x) / 2,
+      y: (first.y + second.y) / 2,
     };
+  };
 
-    const handleWheel = (event: globalThis.WheelEvent) => {
-      if (!canMoveScene) return;
+  const applyZoom = useCallback(
+    (nextZoomRaw: number, clientX: number, clientY: number) => {
+      const scene = sceneRef.current;
 
-      event.preventDefault();
+      if (!scene) return;
 
       const previousZoom = zoomRef.current;
+      const nextZoom = clampZoom(nextZoomRaw);
 
-      const direction = event.deltaY < 0 ? 1 : -1;
-      const nextZoom = clampZoom(previousZoom + direction * ZOOM_STEP);
-
-      if (nextZoom === previousZoom) return;
+      if (Math.abs(nextZoom - previousZoom) < 0.001) return;
 
       const rect = scene.getBoundingClientRect();
 
-      const pointerX = event.clientX - rect.left;
-      const pointerY = event.clientY - rect.top;
+      const pointerX = clientX - rect.left;
+      const pointerY = clientY - rect.top;
 
       const contentX = scene.scrollLeft + pointerX;
       const contentY = scene.scrollTop + pointerY;
@@ -171,6 +203,54 @@ function Game() {
         scene.scrollLeft = contentX * zoomRatio - pointerX;
         scene.scrollTop = contentY * zoomRatio - pointerY;
       });
+    },
+    [],
+  );
+
+  useEffect(() => {
+    const scene = sceneRef.current;
+
+    if (!scene) return;
+
+    const normalizeWheelDelta = (event: globalThis.WheelEvent) => {
+      let delta = event.deltaY;
+
+      if (event.deltaMode === 1) {
+        delta *= 16;
+      }
+
+      if (event.deltaMode === 2) {
+        delta *= scene.clientHeight;
+      }
+
+      return delta;
+    };
+
+    const handleWheel = (event: globalThis.WheelEvent) => {
+      if (!canMoveScene) return;
+
+      event.preventDefault();
+
+      wheelDeltaRef.current += normalizeWheelDelta(event);
+      wheelPointRef.current = {
+        x: event.clientX,
+        y: event.clientY,
+      };
+
+      if (wheelFrameRef.current !== null) return;
+
+      wheelFrameRef.current = requestAnimationFrame(() => {
+        const delta = wheelDeltaRef.current;
+        const point = wheelPointRef.current;
+
+        wheelDeltaRef.current = 0;
+        wheelFrameRef.current = null;
+
+        const factor = Math.exp(-delta * WHEEL_ZOOM_SPEED);
+        const nextZoom = zoomRef.current * factor;
+
+        applyZoom(nextZoom, point.x, point.y);
+      });
     };
 
     scene.addEventListener("wheel", handleWheel, {
@@ -179,8 +259,13 @@ function Game() {
 
     return () => {
       scene.removeEventListener("wheel", handleWheel);
+
+      if (wheelFrameRef.current !== null) {
+        cancelAnimationFrame(wheelFrameRef.current);
+        wheelFrameRef.current = null;
+      }
     };
-  }, [canMoveScene]);
+  }, [applyZoom, canMoveScene]);
 
   const handleOpenExitConfirm = useCallback(() => {
     setIsExitConfirmOpen(true);
@@ -199,27 +284,143 @@ function Game() {
     navigate(appRoutes.MENU, { replace: true });
   };
 
-  const handleSceneMouseDown = (event: MouseEvent<HTMLDivElement>) => {
-    if (!sceneRef.current || !canMoveScene || event.button !== 0) return;
+  // const handleSceneMouseDown = (event: MouseEvent<HTMLDivElement>) => {
+  //   if (!sceneRef.current || !canMoveScene || event.button !== 0) return;
 
-    dragStateRef.current = {
-      isDragging: true,
-      startX: event.clientX,
-      startY: event.clientY,
-      scrollLeft: sceneRef.current.scrollLeft,
-      scrollTop: sceneRef.current.scrollTop,
-      didMove: false,
-    };
+  //   dragStateRef.current = {
+  //     isDragging: true,
+  //     startX: event.clientX,
+  //     startY: event.clientY,
+  //     scrollLeft: sceneRef.current.scrollLeft,
+  //     scrollTop: sceneRef.current.scrollTop,
+  //     didMove: false,
+  //   };
 
-    setIsSceneDragging(true);
+  //   setIsSceneDragging(true);
+  // };
+
+  // const handleSceneMouseMove = (event: MouseEvent<HTMLDivElement>) => {
+  //   const dragState = dragStateRef.current;
+
+  //   if (!sceneRef.current || !dragState.isDragging) return;
+
+  //   event.preventDefault();
+
+  //   const diffX = event.clientX - dragState.startX;
+  //   const diffY = event.clientY - dragState.startY;
+
+  //   if (Math.abs(diffX) > 3 || Math.abs(diffY) > 3) {
+  //     dragState.didMove = true;
+  //   }
+
+  //   sceneRef.current.scrollLeft = dragState.scrollLeft - diffX;
+  //   sceneRef.current.scrollTop = dragState.scrollTop - diffY;
+  // };
+
+  // const stopSceneDrag = () => {
+  //   dragStateRef.current.isDragging = false;
+  //   setIsSceneDragging(false);
+  // };
+
+  const stopSceneDrag = () => {
+    dragStateRef.current.isDragging = false;
+    dragStateRef.current.pointerId = null;
+    pinchStateRef.current.isPinching = false;
+    setIsSceneDragging(false);
   };
 
-  const handleSceneMouseMove = (event: MouseEvent<HTMLDivElement>) => {
-    const dragState = dragStateRef.current;
+  const handleScenePointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    if (!sceneRef.current || !canMoveScene) return;
 
-    if (!sceneRef.current || !dragState.isDragging) return;
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+
+    sceneRef.current.setPointerCapture(event.pointerId);
+
+    pointersRef.current.set(event.pointerId, {
+      x: event.clientX,
+      y: event.clientY,
+      pointerType: event.pointerType,
+    });
+
+    const pointers = getPointersArray();
+
+    if (pointers.length === 1) {
+      dragStateRef.current = {
+        isDragging: true,
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        scrollLeft: sceneRef.current.scrollLeft,
+        scrollTop: sceneRef.current.scrollTop,
+        didMove: false,
+      };
+
+      setIsSceneDragging(true);
+      return;
+    }
+
+    if (pointers.length === 2) {
+      const [first, second] = pointers;
+      const center = getCenter(first, second);
+
+      pinchStateRef.current = {
+        isPinching: true,
+        startDistance: getDistance(first, second),
+        startZoom: zoomRef.current,
+        lastCenterX: center.x,
+        lastCenterY: center.y,
+      };
+
+      dragStateRef.current.isDragging = false;
+      dragStateRef.current.pointerId = null;
+      setIsSceneDragging(false);
+    }
+  };
+
+  const handleScenePointerMove = (event: PointerEvent<HTMLDivElement>) => {
+    const scene = sceneRef.current;
+
+    if (!scene || !canMoveScene) return;
+
+    if (!pointersRef.current.has(event.pointerId)) return;
 
     event.preventDefault();
+
+    pointersRef.current.set(event.pointerId, {
+      x: event.clientX,
+      y: event.clientY,
+      pointerType: event.pointerType,
+    });
+
+    const pointers = getPointersArray();
+
+    if (pinchStateRef.current.isPinching && pointers.length >= 2) {
+      const [first, second] = pointers;
+      const distance = getDistance(first, second);
+      const center = getCenter(first, second);
+
+      const diffCenterX = center.x - pinchStateRef.current.lastCenterX;
+      const diffCenterY = center.y - pinchStateRef.current.lastCenterY;
+
+      scene.scrollLeft -= diffCenterX;
+      scene.scrollTop -= diffCenterY;
+
+      pinchStateRef.current.lastCenterX = center.x;
+      pinchStateRef.current.lastCenterY = center.y;
+
+      const nextZoom =
+        pinchStateRef.current.startZoom *
+        (distance / pinchStateRef.current.startDistance);
+
+      applyZoom(nextZoom, center.x, center.y);
+
+      return;
+    }
+
+    const dragState = dragStateRef.current;
+
+    if (!dragState.isDragging || dragState.pointerId !== event.pointerId)
+      return;
 
     const diffX = event.clientX - dragState.startX;
     const diffY = event.clientY - dragState.startY;
@@ -228,16 +429,69 @@ function Game() {
       dragState.didMove = true;
     }
 
-    sceneRef.current.scrollLeft = dragState.scrollLeft - diffX;
-    sceneRef.current.scrollTop = dragState.scrollTop - diffY;
+    scene.scrollLeft = dragState.scrollLeft - diffX;
+    scene.scrollTop = dragState.scrollTop - diffY;
   };
 
-  const stopSceneDrag = () => {
-    dragStateRef.current.isDragging = false;
-    setIsSceneDragging(false);
+  const handleScenePointerUp = (event: PointerEvent<HTMLDivElement>) => {
+    const scene = sceneRef.current;
+
+    pointersRef.current.delete(event.pointerId);
+
+    if (scene?.hasPointerCapture(event.pointerId)) {
+      scene.releasePointerCapture(event.pointerId);
+    }
+
+    const pointers = getPointersArray();
+
+    if (pointers.length < 2) {
+      pinchStateRef.current.isPinching = false;
+    }
+
+    if (pointers.length === 1 && scene && canMoveScene) {
+      const [remainingPointer] = pointers;
+
+      dragStateRef.current = {
+        isDragging: true,
+        pointerId: null,
+        startX: remainingPointer.x,
+        startY: remainingPointer.y,
+        scrollLeft: scene.scrollLeft,
+        scrollTop: scene.scrollTop,
+        didMove: dragStateRef.current.didMove,
+      };
+
+      return;
+    }
+
+    if (pointers.length === 0) {
+      stopSceneDrag();
+    }
   };
 
   const resetSceneView = () => {
+    pointersRef.current.clear();
+
+    dragStateRef.current = {
+      isDragging: false,
+      pointerId: null,
+      startX: 0,
+      startY: 0,
+      scrollLeft: 0,
+      scrollTop: 0,
+      didMove: false,
+    };
+
+    pinchStateRef.current = {
+      isPinching: false,
+      startDistance: 0,
+      startZoom: 1,
+      lastCenterX: 0,
+      lastCenterY: 0,
+    };
+
+    setIsSceneDragging(false);
+
     zoomRef.current = 1;
     setZoom(1);
 
@@ -342,10 +596,10 @@ function Game() {
         className="game__scene"
         ref={sceneRef}
         data-dragging={isSceneDragging}
-        onMouseDown={handleSceneMouseDown}
-        onMouseMove={handleSceneMouseMove}
-        onMouseUp={stopSceneDrag}
-        onMouseLeave={stopSceneDrag}
+        onPointerDown={handleScenePointerDown}
+        onPointerMove={handleScenePointerMove}
+        onPointerUp={handleScenePointerUp}
+        onPointerCancel={handleScenePointerUp}
       >
         {" "}
         <div
@@ -366,7 +620,7 @@ function Game() {
               width: `${variant.target.width}%`,
               height: `${variant.target.height}%`,
             }}
-            onMouseDown={(event) => {
+            onPointerDown={(event) => {
               dragStateRef.current.didMove = false;
               event.stopPropagation();
             }}

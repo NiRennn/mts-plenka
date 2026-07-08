@@ -5,7 +5,7 @@ import {
   useRef,
   useState,
   type MouseEvent,
-  type WheelEvent,
+  // type WheelEvent,
 } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import "./Game.scss";
@@ -46,7 +46,29 @@ const getRandomVariant = (level: GameLevel): GameVariant => {
   return level.variants[randomIndex];
 };
 
+export function useGameViewportZoom() {
+  useEffect(() => {
+    const viewport = document.querySelector<HTMLMetaElement>(
+      'meta[name="viewport"]',
+    );
+
+    if (!viewport) return;
+
+    const previousContent = viewport.getAttribute("content") ?? "";
+
+    viewport.setAttribute(
+      "content",
+      "width=device-width, initial-scale=1.0, maximum-scale=4.0, user-scalable=yes, viewport-fit=cover",
+    );
+
+    return () => {
+      viewport.setAttribute("content", previousContent);
+    };
+  }, []);
+}
+
 function Game() {
+  useGameViewportZoom();
   const navigate = useNavigate();
   const location = useLocation();
   const user = useAppStore((state) => state.user);
@@ -126,6 +148,37 @@ function Game() {
   const canMoveScene =
     isStarted && !isFound && !isTimeOver && !isExitConfirmOpen;
 
+  useEffect(() => {
+    const scene = sceneRef.current;
+
+    if (!scene) return;
+
+    const handleWheel = (event: globalThis.WheelEvent) => {
+      if (!canMoveScene) return;
+
+      if (event.ctrlKey || event.metaKey) {
+        return;
+      }
+
+      const delta =
+        Math.abs(event.deltaY) > Math.abs(event.deltaX)
+          ? event.deltaY
+          : event.deltaX;
+
+      scene.scrollLeft += delta;
+
+      event.preventDefault();
+    };
+
+    scene.addEventListener("wheel", handleWheel, {
+      passive: false,
+    });
+
+    return () => {
+      scene.removeEventListener("wheel", handleWheel);
+    };
+  }, [canMoveScene]);
+
   const handleOpenExitConfirm = useCallback(() => {
     setIsExitConfirmOpen(true);
     stopSceneDrag();
@@ -141,19 +194,6 @@ function Game() {
     }
 
     navigate(appRoutes.MENU, { replace: true });
-  };
-
-  const handleSceneWheel = (event: WheelEvent<HTMLDivElement>) => {
-    if (!sceneRef.current || !canMoveScene) return;
-
-    const delta =
-      Math.abs(event.deltaY) > Math.abs(event.deltaX)
-        ? event.deltaY
-        : event.deltaX;
-
-    sceneRef.current.scrollLeft += delta;
-
-    event.preventDefault();
   };
 
   const handleSceneMouseDown = (event: MouseEvent<HTMLDivElement>) => {
@@ -189,7 +229,8 @@ function Game() {
   };
 
   const handleBack = () => {
-    handleOpenExitConfirm();
+    // handleOpenExitConfirm();
+    navigate(appRoutes.MENU, { replace: true });
   };
 
   const handleStart = () => {
@@ -289,7 +330,6 @@ function Game() {
         className="game__scene"
         ref={sceneRef}
         data-dragging={isSceneDragging}
-        onWheel={handleSceneWheel}
         onMouseDown={handleSceneMouseDown}
         onMouseMove={handleSceneMouseMove}
         onMouseUp={stopSceneDrag}

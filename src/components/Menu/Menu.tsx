@@ -20,6 +20,8 @@ import checkIcon from "../../assets/icons/done.png";
 import foundPlenka from "../../assets/icons/done-plenka.png";
 
 import { useAppStore } from "../../store/appStore";
+import { getGameLevelImagesById } from "../../data/gameLevels";
+import { preloadImageSrcs  } from "../../utils/preload";
 
 const CHANNEL_URL = "https://t.me/eto_riil";
 const CHANNEL_MTS_URL = "https://vk.com/mts";
@@ -59,6 +61,12 @@ const levels = [
 
 type MenuContentState = "game" | "all-found" | "finished";
 
+const waitNextFrame = () => {
+  return new Promise<void>((resolve) => {
+    requestAnimationFrame(() => resolve());
+  });
+};
+
 function Menu() {
   const navigate = useNavigate();
   const winners = useAppStore((state) => state.winners);
@@ -68,6 +76,7 @@ function Menu() {
 
   const [activeLevelIndex, setActiveLevelIndex] = useState(1);
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const isLevelPassed = (location: string) => {
     return locations.some(
@@ -125,14 +134,34 @@ function Menu() {
     window.open(CHANNEL_URL, "_blank", "noopener,noreferrer");
   };
 
-  const handleGoToGame = () => {
-    if (isActiveLevelPassed) return;
+  const handleGoToGame = async () => {
+    if (isLoading || isActiveLevelPassed) return;
 
-    navigate(appRoutes.GAME, {
-      state: {
-        levelId: activeLevel.id,
-      },
-    });
+    setIsLoading(true);
+
+    try {
+      await waitNextFrame();
+
+      const levelImages = getGameLevelImagesById(activeLevel.id);
+
+      await preloadImageSrcs(levelImages);
+
+      navigate(appRoutes.GAME, {
+        state: {
+          levelId: activeLevel.id,
+        },
+      });
+    } catch (error) {
+      console.error("Error preloading level images:", error);
+
+      navigate(appRoutes.GAME, {
+        state: {
+          levelId: activeLevel.id,
+        },
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const getOffset = (index: number) => {
@@ -158,6 +187,7 @@ function Menu() {
   };
 
   const handleTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (isLoading) return;
     if (touchStartX === null) return;
 
     const touchEndX = event.changedTouches[0].clientX;
@@ -198,7 +228,11 @@ function Menu() {
 
         <div
           className="menu__level_wheel"
-          onTouchStart={(event) => setTouchStartX(event.touches[0].clientX)}
+          onTouchStart={(event) => {
+            if (isLoading) return;
+
+            setTouchStartX(event.touches[0].clientX);
+          }}
           onTouchEnd={handleTouchEnd}
         >
           <div className="menu__level_wheel_track">
@@ -216,7 +250,12 @@ function Menu() {
                   data-active={offset === 0}
                   data-hidden={isHidden}
                   data-passed={isPassed}
-                  onClick={() => setActiveLevelIndex(index)}
+                  disabled={isLoading}
+                  onClick={() => {
+                    if (isLoading) return;
+
+                    setActiveLevelIndex(index);
+                  }}
                 >
                   <div className="menu__level_card_inner">
                     <div className="menu__level_card_photo">
@@ -258,13 +297,17 @@ function Menu() {
         <div className="menu__content_main_btnblock">
           <Button
             variant={isActiveLevelPassed ? "secondary2" : "primary"}
-            disabled={isActiveLevelPassed}
+            disabled={isActiveLevelPassed || isLoading}
             onClick={handleGoToGame}
           >
             {isActiveLevelPassed ? "Плёнка найдена" : "Изучить фото"}
           </Button>
 
-          <Button variant="secondary" onClick={handleGoToInfo}>
+          <Button
+            variant="secondary"
+            onClick={handleGoToInfo}
+            disabled={isLoading}
+          >
             о розыгрыше
           </Button>
         </div>
@@ -353,7 +396,11 @@ function Menu() {
   };
 
   return (
-    <div className="menu" data-state={menuContentState}>
+    <div
+      className="menu"
+      data-state={menuContentState}
+      data-loading={isLoading}
+    >
       <div className="menu__content">
         <img src={plenka} alt="" className="menu__content_plenka" />
 
@@ -363,6 +410,13 @@ function Menu() {
           {menuContentState === "finished" && renderFinishedContent()}
         </div>
       </div>
+      {isLoading && (
+        <div className="menu__loading" role="status" aria-live="polite">
+          <div className="menu__loading_spinner" />
+
+          <p className="menu__loading_text">Загружаем локацию...</p>
+        </div>
+      )}
     </div>
   );
 }

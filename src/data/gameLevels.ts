@@ -257,3 +257,15 @@ export const savePassedLevelId = (levelId: number) => {
     JSON.stringify([...passedLevelIds, levelId]),
   );
 };
+
+export const getGameLevelById = (levelId: number) => {
+  return gameLevels.find((level) => level.id === levelId) ?? null;
+};
+
+export const getGameLevelImagesById = (levelId: number) => {
+  const level = getGameLevelById(levelId);
+
+  if (!level) return [];
+
+  return level.variants.map((variant) => variant.image);
+};

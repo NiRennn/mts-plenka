@@ -34,13 +34,25 @@ import quest from "../../assets/icons/quest.png";
 
 const GAME_TIME_SECONDS = 1 * 60;
 
-const DEBUG_TARGET = false;
+const DEBUG_TARGET = true;
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 3;
 const WHEEL_ZOOM_SPEED = 0.0012;
 
 type GameLocationState = {
   levelId?: number;
+};
+
+type SceneView = {
+  scale: number;
+  x: number;
+  y: number;
+};
+
+type ScenePointer = {
+  x: number;
+  y: number;
+  pointerType: string;
 };
 
 const getRandomVariant = (level: GameLevel): GameVariant => {
@@ -51,32 +63,45 @@ const getRandomVariant = (level: GameLevel): GameVariant => {
 function Game() {
   const navigate = useNavigate();
   const location = useLocation();
+
   const user = useAppStore((state) => state.user);
   const locations = useAppStore((state) => state.locations);
 
   const resultSentRef = useRef(false);
-  const sceneRef = useRef<HTMLDivElement | null>(null);
 
-  const pointersRef = useRef(
-    new Map<number, { x: number; y: number; pointerType: string }>(),
-  );
+  const sceneRef = useRef<HTMLDivElement | null>(null);
+  const innerRef = useRef<HTMLDivElement | null>(null);
+
+  const pointersRef = useRef(new Map<number, ScenePointer>());
+
+  const [view, setView] = useState<SceneView>({
+    scale: 1,
+    x: 0,
+    y: 0,
+  });
+
+  const viewRef = useRef<SceneView>({
+    scale: 1,
+    x: 0,
+    y: 0,
+  });
 
   const dragStateRef = useRef({
     isDragging: false,
     pointerId: null as number | null,
     startX: 0,
     startY: 0,
-    scrollLeft: 0,
-    scrollTop: 0,
+    startViewX: 0,
+    startViewY: 0,
     didMove: false,
   });
 
   const pinchStateRef = useRef({
     isPinching: false,
     startDistance: 0,
-    startZoom: 1,
-    lastCenterX: 0,
-    lastCenterY: 0,
+    startScale: 1,
+    startContentX: 0,
+    startContentY: 0,
   });
 
   const wheelFrameRef = useRef<number | null>(null);
@@ -84,8 +109,6 @@ function Game() {
   const wheelPointRef = useRef({ x: 0, y: 0 });
 
   const [isSceneDragging, setIsSceneDragging] = useState(false);
-  const [zoom, setZoom] = useState(1);
-  const zoomRef = useRef(1);
   const [isStarted, setIsStarted] = useState(false);
   const [isFound, setIsFound] = useState(false);
   const [timeLeft, setTimeLeft] = useState(GAME_TIME_SECONDS);
@@ -119,6 +142,170 @@ function Game() {
 
   const isTimeOver = isStarted && !isFound && timeLeft === 0;
 
+  const canMoveScene =
+    isStarted && !isFound && !isTimeOver && !isExitConfirmOpen;
+
+  const shouldShowTelegramBackButton =
+    isStarted && !isFound && !isTimeOver && !isExitConfirmOpen;
+
+  const minutes = Math.floor(timeLeft / 60);
+  const seconds = timeLeft % 60;
+  const formattedTime = `${minutes}:${String(seconds).padStart(2, "0")}`;
+
+  const clampZoom = (value: number) => {
+    return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, value));
+  };
+
+  const getDistance = (
+    first: { x: number; y: number },
+    second: { x: number; y: number },
+  ) => {
+    return Math.hypot(second.x - first.x, second.y - first.y);
+  };
+
+  const getCenter = (
+    first: { x: number; y: number },
+    second: { x: number; y: number },
+  ) => {
+    return {
+      x: (first.x + second.x) / 2,
+      y: (first.y + second.y) / 2,
+    };
+  };
+
+  const getScenePoint = (clientX: number, clientY: number) => {
+    const scene = sceneRef.current;
+
+    if (!scene) {
+      return {
+        x: clientX,
+        y: clientY,
+      };
+    }
+
+    const rect = scene.getBoundingClientRect();
+
+    return {
+      x: clientX - rect.left,
+      y: clientY - rect.top,
+    };
+  };
+
+  const getPointersEntries = () => {
+    return Array.from(pointersRef.current.entries());
+  };
+
+  const clampView = useCallback((nextView: SceneView): SceneView => {
+    const scene = sceneRef.current;
+    const inner = innerRef.current;
+
+    if (!scene || !inner) return nextView;
+
+    const sceneWidth = scene.clientWidth;
+    const sceneHeight = scene.clientHeight;
+
+    const contentWidth = inner.offsetWidth;
+    const contentHeight = inner.offsetHeight;
+
+    const scaledWidth = contentWidth * nextView.scale;
+    const scaledHeight = contentHeight * nextView.scale;
+
+    let x = nextView.x;
+    let y = nextView.y;
+
+    if (scaledWidth <= sceneWidth) {
+      x = (sceneWidth - scaledWidth) / 2;
+    } else {
+      const minX = sceneWidth - scaledWidth;
+      x = Math.min(0, Math.max(minX, x));
+    }
+
+    if (scaledHeight <= sceneHeight) {
+      y = (sceneHeight - scaledHeight) / 2;
+    } else {
+      const minY = sceneHeight - scaledHeight;
+      y = Math.min(0, Math.max(minY, y));
+    }
+
+    return {
+      scale: nextView.scale,
+      x,
+      y,
+    };
+  }, []);
+
+  const commitView = useCallback(
+    (nextView: SceneView) => {
+      const clampedView = clampView(nextView);
+
+      viewRef.current = clampedView;
+      setView(clampedView);
+    },
+    [clampView],
+  );
+
+  const zoomAt = useCallback(
+    (nextScaleRaw: number, clientX: number, clientY: number) => {
+      const currentView = viewRef.current;
+      const nextScale = clampZoom(nextScaleRaw);
+
+      if (Math.abs(nextScale - currentView.scale) < 0.001) return;
+
+      const point = getScenePoint(clientX, clientY);
+
+      const contentX = (point.x - currentView.x) / currentView.scale;
+      const contentY = (point.y - currentView.y) / currentView.scale;
+
+      commitView({
+        scale: nextScale,
+        x: point.x - contentX * nextScale,
+        y: point.y - contentY * nextScale,
+      });
+    },
+    [commitView],
+  );
+
+  const stopSceneDrag = useCallback(() => {
+    pointersRef.current.clear();
+
+    dragStateRef.current.isDragging = false;
+    dragStateRef.current.pointerId = null;
+
+    pinchStateRef.current.isPinching = false;
+
+    setIsSceneDragging(false);
+  }, []);
+
+  const resetSceneView = useCallback(() => {
+    pointersRef.current.clear();
+
+    dragStateRef.current = {
+      isDragging: false,
+      pointerId: null,
+      startX: 0,
+      startY: 0,
+      startViewX: 0,
+      startViewY: 0,
+      didMove: false,
+    };
+
+    pinchStateRef.current = {
+      isPinching: false,
+      startDistance: 0,
+      startScale: 1,
+      startContentX: 0,
+      startContentY: 0,
+    };
+
+    setIsSceneDragging(false);
+
+    commitView({
+      scale: 1,
+      x: 0,
+      y: 0,
+    });
+  }, [commitView]);
+
   const sendGameResult = useCallback(
     async (isSuccess: boolean) => {
       if (resultSentRef.current) return;
@@ -140,74 +327,7 @@ function Game() {
         console.error("Error saving game result:", error);
       }
     },
-    [user?.user_id, level.title],
-  );
-
-  const minutes = Math.floor(timeLeft / 60);
-  const seconds = timeLeft % 60;
-  const formattedTime = `${minutes}:${String(seconds).padStart(2, "0")}`;
-
-  const canMoveScene =
-    isStarted && !isFound && !isTimeOver && !isExitConfirmOpen;
-
-    const shouldShowTelegramBackButton =
-  isStarted && !isFound && !isTimeOver && !isExitConfirmOpen;
-
-  const clampZoom = (value: number) => {
-    return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, value));
-  };
-
-  const getPointersArray = () => {
-    return Array.from(pointersRef.current.values());
-  };
-
-  const getDistance = (
-    first: { x: number; y: number },
-    second: { x: number; y: number },
-  ) => {
-    return Math.hypot(second.x - first.x, second.y - first.y);
-  };
-
-  const getCenter = (
-    first: { x: number; y: number },
-    second: { x: number; y: number },
-  ) => {
-    return {
-      x: (first.x + second.x) / 2,
-      y: (first.y + second.y) / 2,
-    };
-  };
-
-  const applyZoom = useCallback(
-    (nextZoomRaw: number, clientX: number, clientY: number) => {
-      const scene = sceneRef.current;
-
-      if (!scene) return;
-
-      const previousZoom = zoomRef.current;
-      const nextZoom = clampZoom(nextZoomRaw);
-
-      if (Math.abs(nextZoom - previousZoom) < 0.001) return;
-
-      const rect = scene.getBoundingClientRect();
-
-      const pointerX = clientX - rect.left;
-      const pointerY = clientY - rect.top;
-
-      const contentX = scene.scrollLeft + pointerX;
-      const contentY = scene.scrollTop + pointerY;
-
-      const zoomRatio = nextZoom / previousZoom;
-
-      zoomRef.current = nextZoom;
-      setZoom(nextZoom);
-
-      requestAnimationFrame(() => {
-        scene.scrollLeft = contentX * zoomRatio - pointerX;
-        scene.scrollTop = contentY * zoomRatio - pointerY;
-      });
-    },
-    [],
+    [user?.user_id, level.apiLocation],
   );
 
   useEffect(() => {
@@ -250,9 +370,9 @@ function Game() {
         wheelFrameRef.current = null;
 
         const factor = Math.exp(-delta * WHEEL_ZOOM_SPEED);
-        const nextZoom = zoomRef.current * factor;
+        const nextScale = viewRef.current.scale * factor;
 
-        applyZoom(nextZoom, point.x, point.y);
+        zoomAt(nextScale, point.x, point.y);
       });
     };
 
@@ -268,12 +388,12 @@ function Game() {
         wheelFrameRef.current = null;
       }
     };
-  }, [applyZoom, canMoveScene]);
+  }, [canMoveScene, zoomAt]);
 
   const handleOpenExitConfirm = useCallback(() => {
     setIsExitConfirmOpen(true);
     stopSceneDrag();
-  }, []);
+  }, [stopSceneDrag]);
 
   const handleCloseExitConfirm = () => {
     setIsExitConfirmOpen(false);
@@ -287,55 +407,12 @@ function Game() {
     navigate(appRoutes.MENU, { replace: true });
   };
 
-  // const handleSceneMouseDown = (event: MouseEvent<HTMLDivElement>) => {
-  //   if (!sceneRef.current || !canMoveScene || event.button !== 0) return;
-
-  //   dragStateRef.current = {
-  //     isDragging: true,
-  //     startX: event.clientX,
-  //     startY: event.clientY,
-  //     scrollLeft: sceneRef.current.scrollLeft,
-  //     scrollTop: sceneRef.current.scrollTop,
-  //     didMove: false,
-  //   };
-
-  //   setIsSceneDragging(true);
-  // };
-
-  // const handleSceneMouseMove = (event: MouseEvent<HTMLDivElement>) => {
-  //   const dragState = dragStateRef.current;
-
-  //   if (!sceneRef.current || !dragState.isDragging) return;
-
-  //   event.preventDefault();
-
-  //   const diffX = event.clientX - dragState.startX;
-  //   const diffY = event.clientY - dragState.startY;
-
-  //   if (Math.abs(diffX) > 3 || Math.abs(diffY) > 3) {
-  //     dragState.didMove = true;
-  //   }
-
-  //   sceneRef.current.scrollLeft = dragState.scrollLeft - diffX;
-  //   sceneRef.current.scrollTop = dragState.scrollTop - diffY;
-  // };
-
-  // const stopSceneDrag = () => {
-  //   dragStateRef.current.isDragging = false;
-  //   setIsSceneDragging(false);
-  // };
-
-  const stopSceneDrag = () => {
-    dragStateRef.current.isDragging = false;
-    dragStateRef.current.pointerId = null;
-    pinchStateRef.current.isPinching = false;
-    setIsSceneDragging(false);
-  };
-
   const handleScenePointerDown = (event: PointerEvent<HTMLDivElement>) => {
     if (!sceneRef.current || !canMoveScene) return;
 
     if (event.pointerType === "mouse" && event.button !== 0) return;
+
+    event.preventDefault();
 
     sceneRef.current.setPointerCapture(event.pointerId);
 
@@ -345,7 +422,7 @@ function Game() {
       pointerType: event.pointerType,
     });
 
-    const pointers = getPointersArray();
+    const pointers = getPointersEntries();
 
     if (pointers.length === 1) {
       dragStateRef.current = {
@@ -353,8 +430,8 @@ function Game() {
         pointerId: event.pointerId,
         startX: event.clientX,
         startY: event.clientY,
-        scrollLeft: sceneRef.current.scrollLeft,
-        scrollTop: sceneRef.current.scrollTop,
+        startViewX: viewRef.current.x,
+        startViewY: viewRef.current.y,
         didMove: false,
       };
 
@@ -362,29 +439,32 @@ function Game() {
       return;
     }
 
-    if (pointers.length === 2) {
-      const [first, second] = pointers;
-      const center = getCenter(first, second);
+    if (pointers.length >= 2) {
+      const [, first] = pointers[0];
+      const [, second] = pointers[1];
+
+      const centerClient = getCenter(first, second);
+      const centerScene = getScenePoint(centerClient.x, centerClient.y);
+
+      const currentView = viewRef.current;
 
       pinchStateRef.current = {
         isPinching: true,
         startDistance: getDistance(first, second),
-        startZoom: zoomRef.current,
-        lastCenterX: center.x,
-        lastCenterY: center.y,
+        startScale: currentView.scale,
+        startContentX: (centerScene.x - currentView.x) / currentView.scale,
+        startContentY: (centerScene.y - currentView.y) / currentView.scale,
       };
 
       dragStateRef.current.isDragging = false;
       dragStateRef.current.pointerId = null;
+
       setIsSceneDragging(false);
     }
   };
 
   const handleScenePointerMove = (event: PointerEvent<HTMLDivElement>) => {
-    const scene = sceneRef.current;
-
-    if (!scene || !canMoveScene) return;
-
+    if (!sceneRef.current || !canMoveScene) return;
     if (!pointersRef.current.has(event.pointerId)) return;
 
     event.preventDefault();
@@ -395,35 +475,38 @@ function Game() {
       pointerType: event.pointerType,
     });
 
-    const pointers = getPointersArray();
+    const pointers = getPointersEntries();
 
     if (pinchStateRef.current.isPinching && pointers.length >= 2) {
-      const [first, second] = pointers;
+      const [, first] = pointers[0];
+      const [, second] = pointers[1];
+
       const distance = getDistance(first, second);
-      const center = getCenter(first, second);
 
-      const diffCenterX = center.x - pinchStateRef.current.lastCenterX;
-      const diffCenterY = center.y - pinchStateRef.current.lastCenterY;
+      if (distance <= 0 || pinchStateRef.current.startDistance <= 0) return;
 
-      scene.scrollLeft -= diffCenterX;
-      scene.scrollTop -= diffCenterY;
+      const centerClient = getCenter(first, second);
+      const centerScene = getScenePoint(centerClient.x, centerClient.y);
 
-      pinchStateRef.current.lastCenterX = center.x;
-      pinchStateRef.current.lastCenterY = center.y;
+      const nextScale = clampZoom(
+        pinchStateRef.current.startScale *
+          (distance / pinchStateRef.current.startDistance),
+      );
 
-      const nextZoom =
-        pinchStateRef.current.startZoom *
-        (distance / pinchStateRef.current.startDistance);
-
-      applyZoom(nextZoom, center.x, center.y);
+      commitView({
+        scale: nextScale,
+        x: centerScene.x - pinchStateRef.current.startContentX * nextScale,
+        y: centerScene.y - pinchStateRef.current.startContentY * nextScale,
+      });
 
       return;
     }
 
     const dragState = dragStateRef.current;
 
-    if (!dragState.isDragging || dragState.pointerId !== event.pointerId)
+    if (!dragState.isDragging || dragState.pointerId !== event.pointerId) {
       return;
+    }
 
     const diffX = event.clientX - dragState.startX;
     const diffY = event.clientY - dragState.startY;
@@ -432,8 +515,11 @@ function Game() {
       dragState.didMove = true;
     }
 
-    scene.scrollLeft = dragState.scrollLeft - diffX;
-    scene.scrollTop = dragState.scrollTop - diffY;
+    commitView({
+      scale: viewRef.current.scale,
+      x: dragState.startViewX + diffX,
+      y: dragState.startViewY + diffY,
+    });
   };
 
   const handleScenePointerUp = (event: PointerEvent<HTMLDivElement>) => {
@@ -445,25 +531,44 @@ function Game() {
       scene.releasePointerCapture(event.pointerId);
     }
 
-    const pointers = getPointersArray();
+    const pointers = getPointersEntries();
 
-    if (pointers.length < 2) {
-      pinchStateRef.current.isPinching = false;
+    if (pointers.length >= 2) {
+      const [, first] = pointers[0];
+      const [, second] = pointers[1];
+
+      const centerClient = getCenter(first, second);
+      const centerScene = getScenePoint(centerClient.x, centerClient.y);
+
+      const currentView = viewRef.current;
+
+      pinchStateRef.current = {
+        isPinching: true,
+        startDistance: getDistance(first, second),
+        startScale: currentView.scale,
+        startContentX: (centerScene.x - currentView.x) / currentView.scale,
+        startContentY: (centerScene.y - currentView.y) / currentView.scale,
+      };
+
+      return;
     }
 
-    if (pointers.length === 1 && scene && canMoveScene) {
-      const [remainingPointer] = pointers;
+    pinchStateRef.current.isPinching = false;
+
+    if (pointers.length === 1 && canMoveScene) {
+      const [remainingPointerId, remainingPointer] = pointers[0];
 
       dragStateRef.current = {
         isDragging: true,
-        pointerId: null,
+        pointerId: remainingPointerId,
         startX: remainingPointer.x,
         startY: remainingPointer.y,
-        scrollLeft: scene.scrollLeft,
-        scrollTop: scene.scrollTop,
+        startViewX: viewRef.current.x,
+        startViewY: viewRef.current.y,
         didMove: dragStateRef.current.didMove,
       };
 
+      setIsSceneDragging(true);
       return;
     }
 
@@ -472,43 +577,7 @@ function Game() {
     }
   };
 
-  const resetSceneView = () => {
-    pointersRef.current.clear();
-
-    dragStateRef.current = {
-      isDragging: false,
-      pointerId: null,
-      startX: 0,
-      startY: 0,
-      scrollLeft: 0,
-      scrollTop: 0,
-      didMove: false,
-    };
-
-    pinchStateRef.current = {
-      isPinching: false,
-      startDistance: 0,
-      startZoom: 1,
-      lastCenterX: 0,
-      lastCenterY: 0,
-    };
-
-    setIsSceneDragging(false);
-
-    zoomRef.current = 1;
-    setZoom(1);
-
-    requestAnimationFrame(() => {
-      sceneRef.current?.scrollTo({
-        left: 0,
-        top: 0,
-        behavior: "instant",
-      });
-    });
-  };
-
   const handleBack = () => {
-    // handleOpenExitConfirm();
     navigate(appRoutes.MENU, { replace: true });
   };
 
@@ -546,26 +615,26 @@ function Game() {
     resetSceneView();
   };
 
-useEffect(() => {
-  const tg = (window as any)?.Telegram?.WebApp;
-  const backButton = tg?.BackButton;
+  useEffect(() => {
+    const tg = (window as any)?.Telegram?.WebApp;
+    const backButton = tg?.BackButton;
 
-  if (!backButton) return;
+    if (!backButton) return;
 
-  if (!shouldShowTelegramBackButton) {
-    backButton.offClick(handleOpenExitConfirm);
-    backButton.hide();
-    return;
-  }
+    if (!shouldShowTelegramBackButton) {
+      backButton.offClick(handleOpenExitConfirm);
+      backButton.hide();
+      return;
+    }
 
-  backButton.show();
-  backButton.onClick(handleOpenExitConfirm);
+    backButton.show();
+    backButton.onClick(handleOpenExitConfirm);
 
-  return () => {
-    backButton.offClick(handleOpenExitConfirm);
-    backButton.hide();
-  };
-}, [shouldShowTelegramBackButton, handleOpenExitConfirm]);
+    return () => {
+      backButton.offClick(handleOpenExitConfirm);
+      backButton.hide();
+    };
+  }, [shouldShowTelegramBackButton, handleOpenExitConfirm]);
 
   useEffect(() => {
     if (!isStarted || isFound || isTimeOver || isExitConfirmOpen) return;
@@ -609,17 +678,20 @@ useEffect(() => {
         onPointerMove={handleScenePointerMove}
         onPointerUp={handleScenePointerUp}
         onPointerCancel={handleScenePointerUp}
+        style={{
+          overflow: "hidden",
+          touchAction: "none",
+        }}
       >
-        {" "}
         <div
+          ref={innerRef}
           className="game__scene_inner"
           style={{
-            height: `${zoom * 100}%`,
-            minWidth: `${zoom * 100}vw`,
+            transform: `translate3d(${view.x}px, ${view.y}px, 0) scale(${view.scale})`,
           }}
         >
-          {" "}
           <img src={variant.image} alt="" className="game__image" />
+
           <button
             type="button"
             className="game__target"
@@ -638,6 +710,7 @@ useEffect(() => {
           ></button>
         </div>
       </div>
+
       {isStarted && !isFound && !isTimeOver && !isExitConfirmOpen && (
         <div className="game__top">
           <div className="game__task">
@@ -649,6 +722,7 @@ useEffect(() => {
               плёнку РИИЛЛ
             </span>
           </div>
+
           <div className="game__timer">{formattedTime}</div>
         </div>
       )}
@@ -668,8 +742,10 @@ useEffect(() => {
       {!isStarted && (
         <div className="game__intro">
           <div className="game__intro_card">
-            <img src={currentLocatImage} alt="" className="game__intro_loc" />{" "}
+            <img src={currentLocatImage} alt="" className="game__intro_loc" />
+
             <h1 className="game__intro_title">{level.title}</h1>
+
             <p className="game__intro_text">{level.description}</p>
           </div>
 
@@ -702,12 +778,14 @@ useEffect(() => {
         <div className="game__over">
           <div className="game__over_card">
             <img src={cross} alt="" className="game__over_card_img" />
+
             <h2 className="game__over_card_header">Время закончилось</h2>
 
             <p className="game__over_card_text">
               Но всегда можно повторить попытку ещё раз
             </p>
           </div>
+
           <div className="game__over_btnblock">
             <Button variant="primary" onClick={handleRestart}>
               Повторить
@@ -719,10 +797,12 @@ useEffect(() => {
           </div>
         </div>
       )}
+
       {isExitConfirmOpen && !isFound && !isTimeOver && (
         <div className="game__exit">
           <div className="game__exit_card">
             <img src={quest} alt="" className="game__exit_icon" />
+
             <h2 className="game__exit_title">Хочешь выйти?</h2>
 
             <p className="game__exit_text">

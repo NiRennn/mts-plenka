@@ -14,15 +14,17 @@
   position: absolute;
   inset: 0;
 
-  overflow: auto;
+  overflow: hidden;
 
-  overscroll-behavior: contain;
-
+  overscroll-behavior: none;
   touch-action: none;
 
   scrollbar-width: none;
 
   transition: filter 0.35s ease;
+
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .game[data-started="true"] .game__scene {
@@ -61,6 +63,9 @@
   min-width: 100vw;
 
   position: relative;
+
+  transform-origin: 0 0;
+  will-change: transform;
 }
 
 .game__image {

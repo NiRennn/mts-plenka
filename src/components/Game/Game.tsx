@@ -14,10 +14,12 @@ import appRoutes from "../../routes/routes";
 
 import {
   gameLevels,
+  getRandomGameVariant,
   savePassedLevelId,
   type GameLevel,
   type GameVariant,
 } from "../../data/gameLevels";
+import { preloadImageSrc } from "../../utils/preload";
 import { useAppStore } from "../../store/appStore";
 import { saveGameResult } from "../../api/gameResult";
 
@@ -34,13 +36,14 @@ import quest from "../../assets/icons/quest.png";
 
 const GAME_TIME_SECONDS = 1 * 60;
 
-const DEBUG_TARGET = true;
+const DEBUG_TARGET = false;
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 3;
 const WHEEL_ZOOM_SPEED = 0.0012;
 
 type GameLocationState = {
   levelId?: number;
+  variantId?: number;
 };
 
 type SceneView = {
@@ -55,10 +58,25 @@ type ScenePointer = {
   pointerType: string;
 };
 
-const getRandomVariant = (level: GameLevel): GameVariant => {
-  const randomIndex = Math.floor(Math.random() * level.variants.length);
-  return level.variants[randomIndex];
-};
+// const getRandomVariant = (level: GameLevel): GameVariant => {
+//   const randomIndex = Math.floor(Math.random() * level.variants.length);
+//   return level.variants[randomIndex];
+// };
+
+  const getGameVariant = (
+    level: GameLevel,
+    variantId?: number,
+  ): GameVariant => {
+    const routeVariant = level.variants.find((item) => item.id === variantId);
+
+    if (routeVariant) return routeVariant;
+
+    const randomVariant = getRandomGameVariant(level);
+
+    if (randomVariant) return randomVariant;
+
+    throw new Error(`Level ${level.id} has no variants`);
+  };
 
 function Game() {
   const navigate = useNavigate();
@@ -123,9 +141,18 @@ function Game() {
     );
   }, [locationState?.levelId]);
 
-  const variant = useMemo(() => {
-    return getRandomVariant(level);
-  }, [level]);
+  const initialVariant = useMemo(() => {
+    return getGameVariant(level, locationState?.variantId);
+  }, [level, locationState?.variantId]);
+
+  const [variant, setVariant] = useState<GameVariant>(initialVariant);
+  const [isRestartLoading, setIsRestartLoading] = useState(false);
+
+  useEffect(() => {
+    setVariant(initialVariant);
+  }, [initialVariant]);
+
+
 
   const locatImages = [locat1, locat2, locat3, locat4, locat5];
 
@@ -604,8 +631,22 @@ function Game() {
     navigate(appRoutes.MENU, { replace: true });
   };
 
-  const handleRestart = () => {
-    resultSentRef.current = false;
+const handleRestart = async () => {
+  if (isRestartLoading) return;
+
+  setIsRestartLoading(true);
+  stopSceneDrag();
+
+  try {
+    const nextVariant = getRandomGameVariant(level) ?? variant;
+
+    const preloadResult = await preloadImageSrc(nextVariant.image);
+
+    if (!preloadResult.ok) {
+      console.error("Error preloading restart image:", preloadResult.error);
+    }
+
+    setVariant(nextVariant);
 
     setTimeLeft(GAME_TIME_SECONDS);
     setIsStarted(false);
@@ -613,7 +654,14 @@ function Game() {
     setIsExitConfirmOpen(false);
 
     resetSceneView();
-  };
+
+    resultSentRef.current = false;
+  } catch (error) {
+    console.error("Error restarting game:", error);
+  } finally {
+    setIsRestartLoading(false);
+  }
+};
 
   useEffect(() => {
     const tg = (window as any)?.Telegram?.WebApp;
@@ -669,6 +717,7 @@ function Game() {
       data-time-over={isTimeOver}
       data-exit-confirm={isExitConfirmOpen}
       data-debug-target={DEBUG_TARGET}
+      data-loading={isRestartLoading}
     >
       <div
         className="game__scene"
@@ -787,11 +836,19 @@ function Game() {
           </div>
 
           <div className="game__over_btnblock">
-            <Button variant="primary" onClick={handleRestart}>
+            <Button
+              variant="primary"
+              onClick={handleRestart}
+              disabled={isRestartLoading}
+            >
               Повторить
             </Button>
 
-            <Button variant="secondary3" onClick={handleBack}>
+            <Button
+              variant="secondary3"
+              onClick={handleBack}
+              disabled={isRestartLoading}
+            >
               В&nbsp;меню
             </Button>
           </div>
@@ -821,6 +878,14 @@ function Game() {
               В меню
             </Button>
           </div>
+        </div>
+      )}
+
+      {isRestartLoading && (
+        <div className="game__loading" aria-live="polite">
+          <div className="game__loading_spinner" />
+
+          <p className="game__loading_text">Загружаем локацию...</p>
         </div>
       )}
     </div>

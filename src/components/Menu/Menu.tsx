@@ -20,8 +20,8 @@ import checkIcon from "../../assets/icons/done.png";
 import foundPlenka from "../../assets/icons/done-plenka.png";
 
 import { useAppStore } from "../../store/appStore";
-import { getGameLevelImagesById } from "../../data/gameLevels";
-import { preloadImageSrcs  } from "../../utils/preload";
+import { getRandomGameVariantByLevelId } from "../../data/gameLevels";
+import { preloadImageSrc } from "../../utils/preload";
 
 const CHANNEL_URL = "https://t.me/eto_riil";
 const CHANNEL_MTS_URL = "https://vk.com/mts";
@@ -134,35 +134,43 @@ function Menu() {
     window.open(CHANNEL_URL, "_blank", "noopener,noreferrer");
   };
 
-  const handleGoToGame = async () => {
-    if (isLoading || isActiveLevelPassed) return;
+const handleGoToGame = async () => {
+  if (isLoading || isActiveLevelPassed) return;
 
-    setIsLoading(true);
+  setIsLoading(true);
 
-    try {
-      await waitNextFrame();
+  const variant = getRandomGameVariantByLevelId(activeLevel.id);
 
-      const levelImages = getGameLevelImagesById(activeLevel.id);
+  try {
+    await waitNextFrame();
 
-      await preloadImageSrcs(levelImages);
+    if (variant) {
+      const preloadResult = await preloadImageSrc(variant.image);
 
-      navigate(appRoutes.GAME, {
-        state: {
-          levelId: activeLevel.id,
-        },
-      });
-    } catch (error) {
-      console.error("Error preloading level images:", error);
-
-      navigate(appRoutes.GAME, {
-        state: {
-          levelId: activeLevel.id,
-        },
-      });
-    } finally {
-      setIsLoading(false);
+      if (!preloadResult.ok) {
+        console.error("Error preloading level image:", preloadResult.error);
+      }
     }
-  };
+
+    navigate(appRoutes.GAME, {
+      state: {
+        levelId: activeLevel.id,
+        variantId: variant?.id,
+      },
+    });
+  } catch (error) {
+    console.error("Error preloading level image:", error);
+
+    navigate(appRoutes.GAME, {
+      state: {
+        levelId: activeLevel.id,
+        variantId: variant?.id,
+      },
+    });
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const getOffset = (index: number) => {
     let offset = index - activeLevelIndex;

@@ -269,3 +269,23 @@ export const getGameLevelImagesById = (levelId: number) => {
 
   return level.variants.map((variant) => variant.image);
 };
+
+export const getRandomGameVariant = (
+  level: GameLevel,
+): GameVariant | null => {
+  if (level.variants.length === 0) return null;
+
+  const randomIndex = Math.floor(Math.random() * level.variants.length);
+
+  return level.variants[randomIndex];
+};
+
+export const getRandomGameVariantByLevelId = (
+  levelId: number,
+): GameVariant | null => {
+  const level = getGameLevelById(levelId);
+
+  if (!level) return null;
+
+  return getRandomGameVariant(level);
+};

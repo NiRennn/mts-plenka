@@ -19,7 +19,7 @@ function Onboarding() {
     if (isLoading) return;
 
     if (!user?.user_id) {
-      console.error("user_id not found");
+      console.error("user_id not found"); 
       return;
     }
 

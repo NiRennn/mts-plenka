@@ -135,7 +135,7 @@ function Menu() {
   };
 
 const handleGoToGame = async () => {
-  if (isLoading || isActiveLevelPassed) return;
+  if (isLoading) return;
 
   setIsLoading(true);
 
@@ -305,10 +305,10 @@ const handleGoToGame = async () => {
         <div className="menu__content_main_btnblock">
           <Button
             variant={isActiveLevelPassed ? "secondary2" : "primary"}
-            disabled={isActiveLevelPassed || isLoading}
+            disabled={isLoading}
             onClick={handleGoToGame}
           >
-            {isActiveLevelPassed ? "Плёнка найдена" : "Изучить фото"}
+            {isActiveLevelPassed ? "Сыграть заново" : "Изучить фото"}
           </Button>
 
           <Button

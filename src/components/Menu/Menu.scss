@@ -692,6 +692,127 @@
   }
 }
 
+.menu__allfound-popup {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+
+  background: rgba(255, 255, 255, 0.08);
+
+  -webkit-backdrop-filter: blur(72px);
+  backdrop-filter: blur(72px);
+
+  pointer-events: all;
+
+  padding-top: calc(
+    var(--tg-content-safe-area-inset-top, 0px) +
+      var(--tg-safe-area-inset-top, 0px)
+  );
+
+  padding-right: calc(
+    var(--tg-content-safe-area-inset-right, 0px) +
+      var(--tg-safe-area-inset-right, 0px) + 30px
+  );
+
+  padding-bottom: calc(
+    var(--tg-content-safe-area-inset-bottom, 0px) +
+      var(--tg-safe-area-inset-bottom, 0px) + 37px
+  );
+
+  padding-left: calc(
+    var(--tg-content-safe-area-inset-left, 0px) +
+      var(--tg-safe-area-inset-left, 0px) + 30px
+  );
+}
+
+.menu__allfound-popup-content {
+  width: 100%;
+
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.menu__allfound-popup-card {
+  width: 100%;
+  min-height: 180px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  padding: 24px 25px 28px;
+
+  background: #f5f3ea;
+  border-radius: 69px;
+
+  text-align: center;
+}
+
+.menu__allfound-popup-check {
+  width: 69px;
+  height: 69px;
+
+  display: block;
+
+  margin-bottom: 14px;
+}
+
+.menu__allfound-popup-title {
+  margin: 0 0 14px;
+
+  font-family: "MTSWideMedium";
+  font-size: 32px;
+  line-height: 34px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+
+  text-align: center;
+  color: #000000;
+}
+
+.menu__allfound-popup-text {
+  margin: 0;
+
+  font-family: "MTSTextRegular";
+  font-size: 14px;
+  line-height: 18px;
+
+  text-align: center;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+@media (max-height: 640px) {
+  .menu__allfound-popup-card {
+    padding-top: 20px;
+    padding-bottom: 22px;
+  }
+
+  .menu__allfound-popup-check {
+    width: 58px;
+    height: 58px;
+
+    margin-bottom: 10px;
+  }
+
+  .menu__allfound-popup-title {
+    margin-bottom: 10px;
+
+    font-size: 28px;
+    line-height: 30px;
+  }
+
+  .menu__allfound-popup-text {
+    font-size: 13px;
+    line-height: 16px;
+  }
+}
+
 @media (max-height: 720px) {
   .menu__content_main {
     padding: 19px 0 0;

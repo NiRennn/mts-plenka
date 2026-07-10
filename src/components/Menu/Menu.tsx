@@ -23,8 +23,10 @@ import { useAppStore } from "../../store/appStore";
 import { getRandomGameVariantByLevelId } from "../../data/gameLevels";
 import { preloadImageSrc } from "../../utils/preload";
 
-const CHANNEL_URL = "https://t.me/eto_riil";
+// const CHANNEL_URL = "https://t.me/eto_riil";
 const CHANNEL_MTS_URL = "https://vk.com/mts";
+
+const ALL_FOUND_POPUP_STORAGE_KEY = "riil:all-found-popup:v1";
 
 const levels = [
   {
@@ -73,10 +75,13 @@ function Menu() {
   const user = useAppStore((state) => state.user);
 
   const locations = useAppStore((state) => state.locations);
+  const isHydrated = useAppStore((state) => state.isHydrated);
 
   const [activeLevelIndex, setActiveLevelIndex] = useState(1);
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  const [isAllFoundPopupOpen, setIsAllFoundPopupOpen] = useState(false);
 
   const isLevelPassed = (location: string) => {
     return locations.some(
@@ -89,6 +94,29 @@ function Menu() {
   ).length;
 
   const isAllLevelsPassed = passedLevelsCount >= levels.length;
+
+  useEffect(() => {
+    if (!isHydrated || !user?.user_id || !isAllLevelsPassed) {
+      return;
+    }
+
+    const storageKey = `${ALL_FOUND_POPUP_STORAGE_KEY}:${user.user_id}`;
+
+    try {
+      const wasPopupShown = localStorage.getItem(storageKey) === "1";
+
+      if (wasPopupShown) {
+        return;
+      }
+
+      localStorage.setItem(storageKey, "1");
+      setIsAllFoundPopupOpen(true);
+    } catch (error) {
+      console.error("Не удалось прочитать localStorage:", error);
+
+      setIsAllFoundPopupOpen(true);
+    }
+  }, [isHydrated, isAllLevelsPassed, user?.user_id]);
 
   const isDrawFinished = winners.length > 0;
 
@@ -123,54 +151,54 @@ function Menu() {
     navigate(appRoutes.INFO);
   };
 
-  const handleOpenChannel = () => {
-    const tg = (window as any)?.Telegram?.WebApp;
+  // const handleOpenChannel = () => {
+  //   const tg = (window as any)?.Telegram?.WebApp;
 
-    if (tg?.openTelegramLink) {
-      tg.openTelegramLink(CHANNEL_URL);
-      return;
-    }
+  //   if (tg?.openTelegramLink) {
+  //     tg.openTelegramLink(CHANNEL_URL);
+  //     return;
+  //   }
 
-    window.open(CHANNEL_URL, "_blank", "noopener,noreferrer");
-  };
+  //   window.open(CHANNEL_URL, "_blank", "noopener,noreferrer");
+  // };
 
-const handleGoToGame = async () => {
-  if (isLoading) return;
+  const handleGoToGame = async () => {
+    if (isLoading) return;
 
-  setIsLoading(true);
+    setIsLoading(true);
 
-  const variant = getRandomGameVariantByLevelId(activeLevel.id);
+    const variant = getRandomGameVariantByLevelId(activeLevel.id);
 
-  try {
-    await waitNextFrame();
+    try {
+      await waitNextFrame();
 
-    if (variant) {
-      const preloadResult = await preloadImageSrc(variant.image);
+      if (variant) {
+        const preloadResult = await preloadImageSrc(variant.image);
 
-      if (!preloadResult.ok) {
-        console.error("Error preloading level image:", preloadResult.error);
+        if (!preloadResult.ok) {
+          console.error("Error preloading level image:", preloadResult.error);
+        }
       }
+
+      navigate(appRoutes.GAME, {
+        state: {
+          levelId: activeLevel.id,
+          variantId: variant?.id,
+        },
+      });
+    } catch (error) {
+      console.error("Error preloading level image:", error);
+
+      navigate(appRoutes.GAME, {
+        state: {
+          levelId: activeLevel.id,
+          variantId: variant?.id,
+        },
+      });
+    } finally {
+      setIsLoading(false);
     }
-
-    navigate(appRoutes.GAME, {
-      state: {
-        levelId: activeLevel.id,
-        variantId: variant?.id,
-      },
-    });
-  } catch (error) {
-    console.error("Error preloading level image:", error);
-
-    navigate(appRoutes.GAME, {
-      state: {
-        levelId: activeLevel.id,
-        variantId: variant?.id,
-      },
-    });
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
   const getOffset = (index: number) => {
     let offset = index - activeLevelIndex;
@@ -323,32 +351,32 @@ const handleGoToGame = async () => {
     );
   };
 
-  const renderAllFoundContent = () => {
-    return (
-      <div className="menu__result">
-        <div className="menu__result_card">
-          <img src={checkIcon} alt="" className="menu__result_check" />
+  // const renderAllFoundContent = () => {
+  //   return (
+  //     <div className="menu__result">
+  //       <div className="menu__result_card">
+  //         <img src={checkIcon} alt="" className="menu__result_check" />
 
-          <h1 className="menu__result_title">Все плёнки найдены!</h1>
+  //         <h1 className="menu__result_title">Все плёнки найдены!</h1>
 
-          <p className="menu__result_text">
-            Ты нашел все плёнки и&nbsp;участвуешь в&nbsp;розыгрыше! Итоги
-            подведём до&nbsp;__
-          </p>
-        </div>
+  //         <p className="menu__result_text">
+  //           Ты нашел все плёнки и&nbsp;участвуешь в&nbsp;розыгрыше! Итоги
+  //           подведём до&nbsp;__
+  //         </p>
+  //       </div>
 
-        <div className="menu__result_buttons">
-          <Button variant="primary" onClick={handleOpenChannel}>
-            Канал РИИЛ
-          </Button>
+  //       <div className="menu__result_buttons">
+  //         <Button variant="primary" onClick={handleOpenChannel}>
+  //           Канал РИИЛ
+  //         </Button>
 
-          <Button variant="secondary" onClick={handleGoToInfo}>
-            о розыгрыше
-          </Button>
-        </div>
-      </div>
-    );
-  };
+  //         <Button variant="secondary" onClick={handleGoToInfo}>
+  //           о розыгрыше
+  //         </Button>
+  //       </div>
+  //     </div>
+  //   );
+  // };
 
   const renderFinishedContent = () => {
     return (
@@ -414,7 +442,7 @@ const handleGoToGame = async () => {
 
         <div className="menu__content_main">
           {menuContentState === "game" && renderGameContent()}
-          {menuContentState === "all-found" && renderAllFoundContent()}
+          {menuContentState === "all-found" && renderGameContent()}
           {menuContentState === "finished" && renderFinishedContent()}
         </div>
       </div>
@@ -423,6 +451,46 @@ const handleGoToGame = async () => {
           <div className="menu__loading_spinner" />
 
           <p className="menu__loading_text">Загружаем локацию...</p>
+        </div>
+      )}
+      {isAllFoundPopupOpen && (
+        <div
+          className="menu__allfound-popup"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="all-found-popup-title"
+        >
+          <div className="menu__allfound-popup-content">
+            <div className="menu__allfound-popup-card">
+              <img
+                src={checkIcon}
+                alt=""
+                className="menu__allfound-popup-check"
+              />
+
+              <h2
+                id="all-found-popup-title"
+                className="menu__allfound-popup-title"
+              >
+                Все пленки
+                <br />
+                найдены!
+              </h2>
+
+              <p className="menu__allfound-popup-text">
+                Ты нашел все пленки и&nbsp;участвуешь
+                <br />
+                в&nbsp;розыгрыше! Итоги подведем до&nbsp;__
+              </p>
+            </div>
+
+            <Button
+              variant="primary"
+              onClick={() => setIsAllFoundPopupOpen(false)}
+            >
+              Закрыть
+            </Button>
+          </div>
         </div>
       )}
     </div>

@@ -472,15 +472,15 @@ function Menu() {
                 id="all-found-popup-title"
                 className="menu__allfound-popup-title"
               >
-                Все пленки
+                Все плёнки
                 <br />
                 найдены!
               </h2>
 
               <p className="menu__allfound-popup-text">
-                Ты нашел все пленки и&nbsp;участвуешь
+                Ты нашёл все плёнки и&nbsp;участвуешь
                 <br />
-                в&nbsp;розыгрыше! Итоги подведем до&nbsp;__
+                в&nbsp;розыгрыше! Итоги подведём до&nbsp;__
               </p>
             </div>
 

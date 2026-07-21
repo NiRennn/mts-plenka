@@ -13,6 +13,7 @@ import li1 from "../../assets/icons/li-1.png";
 import li2 from "../../assets/icons/li-2.png";
 
 import Button from "../Button/Button";
+import rulesPdf from "../../assets/Правила.pdf";
 
 type FaqItem = {
   id: number;
@@ -81,6 +82,18 @@ function Info() {
     }
 
     window.open(CHANNEL_URL, "_blank", "noopener,noreferrer");
+  };
+
+  const handleOpenRules = () => {
+    const tg = (window as any)?.Telegram?.WebApp;
+
+    if (tg?.openLink) {
+      const absoluteUrl = new URL(rulesPdf, window.location.href).href;
+      tg.openLink(absoluteUrl);
+      return;
+    }
+
+    window.open(rulesPdf, "_blank", "noopener,noreferrer");
   };
 
   return (
@@ -181,7 +194,7 @@ function Info() {
 
           <div className="info__buttons">
             <Button variant="primary" onClick={handleOpenRiil}>В канал РИИЛ</Button>
-            <Button variant="secondary2">Правила розыгрыша</Button>
+            <Button variant="secondary2" onClick={handleOpenRules}>Правила розыгрыша</Button>
           </div>
         </section>
       </div>

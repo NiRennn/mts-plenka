@@ -61,7 +61,7 @@ function Onboarding() {
 
             <p className="onboarding__content_bot_textblock_text">
               <span className="onboarding__content_bot_textblock_b">
-                МТС от&nbsp;РИИЛ{" "}
+                РИИЛ от&nbsp;МТС{" "}
               </span>
               объединился с&nbsp;фотолабораторией{" "}
               <span className="onboarding__content_bot_textblock_b">ЛУЧ </span>

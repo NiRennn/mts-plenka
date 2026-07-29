@@ -63,20 +63,17 @@ type ScenePointer = {
 //   return level.variants[randomIndex];
 // };
 
-  const getGameVariant = (
-    level: GameLevel,
-    variantId?: number,
-  ): GameVariant => {
-    const routeVariant = level.variants.find((item) => item.id === variantId);
+const getGameVariant = (level: GameLevel, variantId?: number): GameVariant => {
+  const routeVariant = level.variants.find((item) => item.id === variantId);
 
-    if (routeVariant) return routeVariant;
+  if (routeVariant) return routeVariant;
 
-    const randomVariant = getRandomGameVariant(level);
+  const randomVariant = getRandomGameVariant(level);
 
-    if (randomVariant) return randomVariant;
+  if (randomVariant) return randomVariant;
 
-    throw new Error(`Level ${level.id} has no variants`);
-  };
+  throw new Error(`Level ${level.id} has no variants`);
+};
 
 function Game() {
   const navigate = useNavigate();
@@ -151,8 +148,6 @@ function Game() {
   useEffect(() => {
     setVariant(initialVariant);
   }, [initialVariant]);
-
-
 
   const locatImages = [locat1, locat2, locat3, locat4, locat5];
 
@@ -631,37 +626,37 @@ function Game() {
     navigate(appRoutes.MENU, { replace: true });
   };
 
-const handleRestart = async () => {
-  if (isRestartLoading) return;
+  const handleRestart = async () => {
+    if (isRestartLoading) return;
 
-  setIsRestartLoading(true);
-  stopSceneDrag();
+    setIsRestartLoading(true);
+    stopSceneDrag();
 
-  try {
-    const nextVariant = getRandomGameVariant(level) ?? variant;
+    try {
+      const nextVariant = getRandomGameVariant(level) ?? variant;
 
-    const preloadResult = await preloadImageSrc(nextVariant.image);
+      const preloadResult = await preloadImageSrc(nextVariant.image);
 
-    if (!preloadResult.ok) {
-      console.error("Error preloading restart image:", preloadResult.error);
+      if (!preloadResult.ok) {
+        console.error("Error preloading restart image:", preloadResult.error);
+      }
+
+      setVariant(nextVariant);
+
+      setTimeLeft(GAME_TIME_SECONDS);
+      setIsStarted(false);
+      setIsFound(false);
+      setIsExitConfirmOpen(false);
+
+      resetSceneView();
+
+      resultSentRef.current = false;
+    } catch (error) {
+      console.error("Error restarting game:", error);
+    } finally {
+      setIsRestartLoading(false);
     }
-
-    setVariant(nextVariant);
-
-    setTimeLeft(GAME_TIME_SECONDS);
-    setIsStarted(false);
-    setIsFound(false);
-    setIsExitConfirmOpen(false);
-
-    resetSceneView();
-
-    resultSentRef.current = false;
-  } catch (error) {
-    console.error("Error restarting game:", error);
-  } finally {
-    setIsRestartLoading(false);
-  }
-};
+  };
 
   useEffect(() => {
     const tg = (window as any)?.Telegram?.WebApp;
@@ -768,7 +763,7 @@ const handleRestart = async () => {
             <span>
               Найди
               <br />
-              плёнку РИИЛЛ
+              плёнку РИИЛ
             </span>
           </div>
 

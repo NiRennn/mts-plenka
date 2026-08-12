@@ -480,7 +480,7 @@ function Menu() {
               <p className="menu__allfound-popup-text">
                 Ты нашёл все плёнки и&nbsp;участвуешь
                 <br />
-                в&nbsp;розыгрыше! Итоги подведём 7&nbsp;и&nbsp;14&nbsp;августа!
+                в&nbsp;розыгрыше! Итоги подведём 7&nbsp;и&nbsp;17&nbsp;августа!
               </p>
             </div>
 
